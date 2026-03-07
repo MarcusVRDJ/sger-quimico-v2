@@ -7,15 +7,15 @@ import { sessions, usuarios } from "@/drizzle/schema";
 import { eq, and, gt } from "drizzle-orm";
 import type { Perfil } from "@/drizzle/schema";
 
-const JWT_SECRET = new TextEncoder().encode(
-  (() => {
-    const secret = process.env.JWT_SECRET;
-    if (!secret && process.env.NODE_ENV === "production") {
-      throw new Error("JWT_SECRET environment variable is required in production");
-    }
-    return secret ?? "fallback-secret-change-me-in-development";
-  })()
-);
+function getJwtSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET;
+  if (!secret && process.env.NODE_ENV === "production") {
+    throw new Error("JWT_SECRET environment variable is required in production");
+  }
+  return new TextEncoder().encode(
+    secret ?? "fallback-secret-change-me-in-development"
+  );
+}
 
 const COOKIE_NAME = "sge-token";
 const JWT_EXPIRY = "8h";
@@ -35,12 +35,12 @@ export async function signJWT(payload: JWTPayload): Promise<string> {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(JWT_EXPIRY)
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
 }
 
 export async function verifyJWT(token: string): Promise<JWTPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, getJwtSecret());
     return payload as unknown as JWTPayload;
   } catch {
     return null;

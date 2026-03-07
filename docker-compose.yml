@@ -1,0 +1,38 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sge-quimico-app
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sge}:${POSTGRES_PASSWORD:-sge}@db:5432/${POSTGRES_DB:-sge_quimico_v2}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-noreply@sge.com}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@sge.com}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: sge-quimico-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sge}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sge}
+      POSTGRES_DB: ${POSTGRES_DB:-sge_quimico_v2}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sge} -d ${POSTGRES_DB:-sge_quimico_v2}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

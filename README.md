@@ -33,13 +33,16 @@ O SGE Químico v2 é um sistema web para gestão do **ciclo de vida de contentor
 
 ## 3. Pré-requisitos
 
-- Node.js 20+
-- PostgreSQL 14+
+- Node.js 20+ (desenvolvimento local)
+- PostgreSQL 14+ (desenvolvimento local)
 - npm ou yarn
+- Docker + Docker Compose (execução em contêiner)
 
 ---
 
 ## 4. Setup
+
+### 4a. Desenvolvimento local
 
 ```bash
 # 1. Clone o repositório
@@ -68,6 +71,45 @@ npm run dev
 ```
 
 Acesse: http://localhost:3000
+
+### 4b. Docker Compose
+
+> **Pré-requisito:** Docker e Docker Compose instalados.
+
+```bash
+# 1. Clone o repositório
+git clone https://github.com/MarcusVRDJ/sger-quimico-v2.git
+cd sger-quimico-v2
+
+# 2. Configure as variáveis de ambiente
+cp .env.example .env
+# JWT_SECRET é obrigatório — gere um valor seguro:
+# openssl rand -base64 32
+
+# 3. Suba os contêineres (app + PostgreSQL)
+docker compose up --build -d
+
+# 4. Rode as migrações dentro do contêiner da aplicação
+docker compose exec app npx drizzle-kit migrate
+
+# 5. Popule o banco com dados iniciais
+docker compose exec app npx tsx src/drizzle/seed.ts
+```
+
+Acesse: http://localhost:3000
+
+**Comandos úteis:**
+
+```bash
+# Ver logs da aplicação
+docker compose logs -f app
+
+# Parar os serviços
+docker compose down
+
+# Parar e remover volume de dados do banco
+docker compose down -v
+```
 
 ---
 

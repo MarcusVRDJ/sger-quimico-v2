@@ -1,0 +1,11 @@
+.git
+.next
+.env
+.env.local
+.env.production
+node_modules
+drizzle/migrations
+tsconfig.tsbuildinfo
+README.md
+docker-compose.yml
+Dockerfile
