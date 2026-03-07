@@ -6,8 +6,8 @@ import type { Usuario } from "@/drizzle/schema";
 type UsuarioComAcoes = Omit<Usuario, "senhaHash">;
 
 export default function UsuariosPage() {
-  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [pendentes, setPendentes] = useState<Usuario[]>([]);
+  const [usuarios, setUsuarios] = useState<UsuarioComAcoes[]>([]);
+  const [pendentes, setPendentes] = useState<UsuarioComAcoes[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [abaAtiva, setAbaAtiva] = useState<"ativos" | "pendentes">("ativos");
 
@@ -16,8 +16,8 @@ export default function UsuariosPage() {
       fetch("/api/usuarios"),
       fetch("/api/usuarios/pendentes"),
     ]);
-    if (resAtivos.ok) setUsuarios(await resAtivos.json() as Usuario[]);
-    if (resPendentes.ok) setPendentes(await resPendentes.json() as Usuario[]);
+    if (resAtivos.ok) setUsuarios(await resAtivos.json() as UsuarioComAcoes[]);
+    if (resPendentes.ok) setPendentes(await resPendentes.json() as UsuarioComAcoes[]);
     setCarregando(false);
   }
 

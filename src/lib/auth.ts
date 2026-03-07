@@ -8,7 +8,13 @@ import { eq, and, gt } from "drizzle-orm";
 import type { Perfil } from "@/drizzle/schema";
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET ?? "fallback-secret-change-me"
+  (() => {
+    const secret = process.env.JWT_SECRET;
+    if (!secret && process.env.NODE_ENV === "production") {
+      throw new Error("JWT_SECRET environment variable is required in production");
+    }
+    return secret ?? "fallback-secret-change-me-in-development";
+  })()
 );
 
 const COOKIE_NAME = "sge-token";
