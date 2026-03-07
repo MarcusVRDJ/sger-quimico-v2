@@ -1,0 +1,66 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/lib/auth";
+
+const PUBLIC_PATHS = [
+  "/login",
+  "/solicitar-acesso",
+  "/api/auth/login",
+];
+
+const ADMIN_ONLY_PATHS = ["/usuarios"];
+const MOBILE_PATHS = ["/mobile"];
+
+export async function middleware(request: NextRequest): Promise<NextResponse> {
+  const { pathname } = request.nextUrl;
+
+  // Allow public paths and static assets
+  if (
+    PUBLIC_PATHS.some((p) => pathname.startsWith(p)) ||
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon")
+  ) {
+    // Redirect authenticated users away from auth pages
+    if (pathname === "/login" || pathname === "/solicitar-acesso") {
+      const session = await getSession(request);
+      if (session) {
+        const dest =
+          session.perfil === "OPERADOR"
+            ? new URL("/mobile", request.url)
+            : new URL("/dashboard", request.url);
+        return NextResponse.redirect(dest);
+      }
+    }
+    return NextResponse.next();
+  }
+
+  const session = await getSession(request);
+
+  if (!session) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // /usuarios → ADMIN only
+  if (
+    ADMIN_ONLY_PATHS.some((p) => pathname.startsWith(p)) &&
+    session.perfil !== "ADMIN"
+  ) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  // /mobile → OPERADOR or ADMIN
+  if (MOBILE_PATHS.some((p) => pathname.startsWith(p))) {
+    if (session.perfil !== "OPERADOR" && session.perfil !== "ADMIN") {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|api/auth/login|api/auth/logout).*)",
+  ],
+};
