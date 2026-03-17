@@ -37,6 +37,7 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-sge}:${POSTGRES_PASSWORD:-sge}@db:5432/${POSTGRES_DB:-sge_quimico_v2}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-false}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-noreply@sge.com}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@sge.com}

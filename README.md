@@ -88,13 +88,9 @@ cp .env.example .env
 
 # 3. Suba os contêineres (app + PostgreSQL)
 docker compose up --build -d
-
-# 4. Rode as migrações dentro do contêiner da aplicação
-docker compose exec app npx drizzle-kit migrate
-
-# 5. Popule o banco com dados iniciais
-docker compose exec app npx tsx src/drizzle/seed.ts
 ```
+
+> O serviço `migrate` executa automaticamente `db:migrate` e `db:seed` antes de iniciar o `app`.
 
 Acesse: http://localhost:3000
 
@@ -217,6 +213,7 @@ middleware.ts
 | `RESEND_FROM_EMAIL` | Email remetente |
 | `ADMIN_EMAIL` | Email do administrador (notificações) |
 | `NEXT_PUBLIC_APP_URL` | URL pública da aplicação |
+| `AUTH_COOKIE_SECURE` | Força cookie `Secure` (`true`/`false`). Em teste mobile via IP local/HTTP, usar `false` |
 
 ---
 

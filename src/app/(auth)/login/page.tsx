@@ -20,6 +20,7 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, senha }),
       });
 
@@ -30,11 +31,26 @@ export default function LoginPage() {
         return;
       }
 
-      if (data.perfil === "OPERADOR") {
-        router.push("/mobile");
-      } else {
-        router.push("/dashboard");
+      const meRes = await fetch("/api/auth/me", {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+      });
+
+      if (!meRes.ok) {
+        setErro(
+          "Login validado, mas a sessão não foi persistida neste navegador. Verifique se está acessando por HTTPS ou ajuste AUTH_COOKIE_SECURE no ambiente de teste local."
+        );
+        return;
       }
+
+      if (data.perfil === "OPERADOR") {
+        router.replace("/mobile");
+      } else {
+        router.replace("/dashboard");
+      }
+
+      router.refresh();
     } catch {
       setErro("Erro de conexão. Tente novamente.");
     } finally {

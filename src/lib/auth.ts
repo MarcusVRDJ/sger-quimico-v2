@@ -20,6 +20,15 @@ function getJwtSecret(): Uint8Array {
 const COOKIE_NAME = "sge-token";
 const JWT_EXPIRY = "8h";
 
+function resolveCookieSecure(): boolean {
+  const override = process.env.AUTH_COOKIE_SECURE?.trim().toLowerCase();
+
+  if (override === "true") return true;
+  if (override === "false") return false;
+
+  return process.env.NODE_ENV === "production";
+}
+
 export interface JWTPayload {
   sub: string;
   email: string;
@@ -112,7 +121,7 @@ export async function requireRole(
 export function setAuthCookie(response: NextResponse, token: string): void {
   response.cookies.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: resolveCookieSecure(),
     sameSite: "lax",
     maxAge: 60 * 60 * 8, // 8h
     path: "/",
@@ -122,7 +131,7 @@ export function setAuthCookie(response: NextResponse, token: string): void {
 export function clearAuthCookie(response: NextResponse): void {
   response.cookies.set(COOKIE_NAME, "", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: resolveCookieSecure(),
     sameSite: "lax",
     maxAge: 0,
     path: "/",
