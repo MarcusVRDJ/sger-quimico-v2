@@ -1,30 +1,63 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { contentores } from "@/drizzle/schema";
+import { contentores, statusContentorEnum } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth";
 import type { StatusContentor } from "@/drizzle/schema";
 import { z } from "zod";
+
+const querySchema = z.object({
+  status: z.enum(statusContentorEnum.enumValues).optional(),
+  numeroSerie: z.string().trim().min(1).optional(),
+});
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const session = await requireAuth(request);
   if (session instanceof NextResponse) return session;
 
   const { searchParams } = new URL(request.url);
-  const status = searchParams.get("status") as StatusContentor | null;
+  const rawQuery = {
+    status: searchParams.get("status") ?? undefined,
+    numeroSerie: searchParams.get("numeroSerie") ?? undefined,
+  };
 
-  const rows = status
-    ? await db
-        .select()
-        .from(contentores)
-        .where(eq(contentores.status, status))
-    : await db.select().from(contentores);
+  const parsedQuery = querySchema.safeParse(rawQuery);
+  if (!parsedQuery.success) {
+    return NextResponse.json(
+      {
+        error: "Parâmetros de consulta inválidos",
+        details: parsedQuery.error.flatten(),
+      },
+      { status: 400 }
+    );
+  }
 
-  return NextResponse.json(rows);
+  const { status, numeroSerie } = parsedQuery.data;
+
+  try {
+    const rows = numeroSerie
+      ? await db
+          .select()
+          .from(contentores)
+          .where(eq(contentores.numeroSerie, numeroSerie))
+      : status
+        ? await db
+            .select()
+            .from(contentores)
+            .where(eq(contentores.status, status as StatusContentor))
+        : await db.select().from(contentores);
+
+    return NextResponse.json(rows);
+  } catch (error) {
+    console.error("Erro em GET /api/contentores", error);
+    return NextResponse.json(
+      { error: "Falha ao buscar contentores" },
+      { status: 500 }
+    );
+  }
 }
 
 const novoContentorSchema = z.object({
-  codigo: z.string().min(1),
   numeroSerie: z.string().min(1),
   tipoContentor: z.enum(["OFFSHORE", "ONSHORE_REFIL", "ONSHORE_BASE"]),
   material: z.string().optional(),

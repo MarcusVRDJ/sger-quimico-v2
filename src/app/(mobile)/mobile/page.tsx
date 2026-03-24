@@ -11,7 +11,7 @@ export default async function MobileHomePage() {
       label: "Checklist Recebimento",
       descricao: "Inspecionar contentor recebido",
       icon: RefreshCw,
-      cor: "bg-blue-600",
+      cor: "bg-primary",
     },
     {
       href: "/mobile/expedicao",
@@ -32,10 +32,10 @@ export default async function MobileHomePage() {
   return (
     <div className="px-4 pt-8 pb-4">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-foreground">
           Olá, {session?.nome?.split(" ")[0]}!
         </h1>
-        <p className="text-gray-500 mt-1">O que você vai fazer hoje?</p>
+        <p className="text-muted-foreground mt-1">O que você vai fazer hoje?</p>
       </div>
 
       <div className="space-y-4">
@@ -45,14 +45,14 @@ export default async function MobileHomePage() {
             <Link
               key={acao.href}
               href={acao.href}
-              className="flex items-center gap-4 bg-white rounded-xl p-5 shadow-sm border border-gray-100 active:scale-95 transition-transform"
+              className="flex items-center gap-4 bg-card rounded-xl p-5 shadow-sm border border-border active:scale-95 transition-transform"
             >
               <div className={`${acao.cor} p-3 rounded-xl text-white`}>
                 <Icon className="h-6 w-6" />
               </div>
               <div>
-                <p className="font-semibold text-gray-900">{acao.label}</p>
-                <p className="text-sm text-gray-500">{acao.descricao}</p>
+                <p className="font-semibold text-foreground">{acao.label}</p>
+                <p className="text-sm text-muted-foreground">{acao.descricao}</p>
               </div>
             </Link>
           );

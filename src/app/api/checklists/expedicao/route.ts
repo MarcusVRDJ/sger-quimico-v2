@@ -10,7 +10,7 @@ import { requireAuth } from "@/lib/auth";
 import { z } from "zod";
 
 const checklistSchema = z.object({
-  codigo: z.string().min(1),
+  numeroSerie: z.string().min(1),
   tampaOk: z.boolean(),
   vedacaoOk: z.boolean(),
   lacresIntactos: z.boolean(),
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const {
-    codigo,
+    numeroSerie,
     tampaOk,
     vedacaoOk,
     lacresIntactos,
@@ -59,12 +59,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const [contentor] = await db
     .select()
     .from(contentores)
-    .where(eq(contentores.codigo, codigo))
+    .where(eq(contentores.numeroSerie, numeroSerie))
     .limit(1);
 
   if (!contentor) {
     return NextResponse.json(
-      { error: `Contentor "${codigo}" não encontrado` },
+      { error: `Contentor com número de série "${numeroSerie}" não encontrado` },
       { status: 404 }
     );
   }

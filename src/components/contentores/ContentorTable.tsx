@@ -13,8 +13,7 @@ export function ContentorTable({ contentores }: ContentorTableProps) {
     <div className="overflow-x-auto">
       <table className="w-full text-sm text-left">
         <thead>
-          <tr className="border-b border-gray-200 text-xs text-gray-500 uppercase tracking-wider">
-            <th className="px-4 py-3">Código</th>
+          <tr className="border-b border-border text-xs text-muted-foreground uppercase tracking-wider">
             <th className="px-4 py-3">Nº Série</th>
             <th className="px-4 py-3">Tipo</th>
             <th className="px-4 py-3">Status</th>
@@ -22,20 +21,19 @@ export function ContentorTable({ contentores }: ContentorTableProps) {
             <th className="px-4 py-3">Ações</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
+        <tbody className="divide-y divide-border">
           {contentores.map((c) => (
-            <tr key={c.id} className="hover:bg-gray-50 transition-colors">
-              <td className="px-4 py-3 font-medium text-gray-900">
-                {c.codigo}
+            <tr key={c.id} className="hover:bg-muted/40 transition-colors">
+              <td className="px-4 py-3 font-medium text-foreground">
+                {c.numeroSerie}
               </td>
-              <td className="px-4 py-3 text-gray-600">{c.numeroSerie}</td>
-              <td className="px-4 py-3 text-gray-600">
+              <td className="px-4 py-3 text-muted-foreground">
                 {tipoLabel(c.tipoContentor)}
               </td>
               <td className="px-4 py-3">
                 <StatusBadge status={c.status} />
               </td>
-              <td className="px-4 py-3 text-gray-600">
+              <td className="px-4 py-3 text-muted-foreground">
                 {c.dataUltimaInspecao
                   ? new Date(c.dataUltimaInspecao).toLocaleDateString("pt-BR")
                   : "—"}
@@ -43,7 +41,7 @@ export function ContentorTable({ contentores }: ContentorTableProps) {
               <td className="px-4 py-3">
                 <Link
                   href={`/contentores/${c.id}`}
-                  className="text-blue-600 hover:underline text-sm font-medium"
+                  className="text-primary hover:underline text-sm font-medium"
                 >
                   Ver detalhes
                 </Link>
@@ -53,8 +51,8 @@ export function ContentorTable({ contentores }: ContentorTableProps) {
           {contentores.length === 0 && (
             <tr>
               <td
-                colSpan={6}
-                className="px-4 py-8 text-center text-gray-500"
+                colSpan={5}
+                className="px-4 py-8 text-center text-muted-foreground"
               >
                 Nenhum contentor encontrado.
               </td>

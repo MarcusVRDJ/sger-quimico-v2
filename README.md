@@ -94,6 +94,25 @@ docker compose up --build -d
 
 Acesse: http://localhost:3000
 
+### 4c. Docker Compose (Desenvolvimento com Live Reload)
+
+Use o arquivo de override de desenvolvimento para rodar o Next.js em modo dev com hot reload:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+```
+
+Nesse modo:
+- alterações em `src/` e demais arquivos do projeto recarregam automaticamente
+- o container usa bind mount do diretório local
+- `WATCHPACK_POLLING` e `CHOKIDAR_USEPOLLING` ficam habilitados para maior compatibilidade
+
+Para parar:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml down
+```
+
 **Comandos úteis:**
 
 ```bash
@@ -126,6 +145,14 @@ docker compose down -v
 | **ADMIN** | Desktop + Mobile | Tudo + aprovar/reprovar contas + excluir usuários |
 | **ANALISTA** | Desktop | Reservar contentores, emitir requisições de limpeza, dashboard |
 | **OPERADOR** | Mobile | Executar checklists (recebimento, expedição) e limpezas |
+
+### Regra por tipo de dispositivo
+
+- `ADMIN`: pode autenticar e navegar em desktop e mobile.
+- `ANALISTA`: acesso restrito a desktop.
+- `OPERADOR`: acesso restrito a dispositivo móvel.
+
+> A detecção de dispositivo é baseada em `user-agent` e aplicada no login e no middleware de navegação.
 
 ---
 

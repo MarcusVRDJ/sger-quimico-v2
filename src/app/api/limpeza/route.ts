@@ -35,7 +35,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         tipoOrigem: requisicoesLimpeza.tipoOrigem,
         reservadoParaProducao: requisicoesLimpeza.reservadoParaProducao,
         observacoes: requisicoesLimpeza.observacoes,
-        codigoContentor: contentores.codigo,
+        numeroSerieContentor: contentores.numeroSerie,
       })
       .from(requisicoesLimpeza)
       .leftJoin(
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         tipoOrigem: requisicoesLimpeza.tipoOrigem,
         reservadoParaProducao: requisicoesLimpeza.reservadoParaProducao,
         observacoes: requisicoesLimpeza.observacoes,
-        codigoContentor: contentores.codigo,
+        numeroSerieContentor: contentores.numeroSerie,
       })
       .from(requisicoesLimpeza)
       .leftJoin(

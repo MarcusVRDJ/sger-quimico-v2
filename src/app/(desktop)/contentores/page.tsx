@@ -45,19 +45,19 @@ export default function ContentoresPage() {
 
   return (
     <div>
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <h2 className="text-xl font-semibold text-gray-900">Contentores</h2>
-        <p className="text-sm text-gray-500 mt-0.5">
+      <div className="bg-card border-b border-border px-6 py-4">
+        <h2 className="text-xl font-semibold text-foreground">Contentores</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">
           Gestão do ciclo de vida dos contentores IBC
         </p>
       </div>
 
       <main className="p-6">
-        <div className="bg-white rounded-lg shadow-sm">
-          <div className="px-4 py-3 border-b border-gray-200 flex items-center gap-4">
+        <div className="bg-card rounded-lg border border-border shadow-sm">
+          <div className="px-4 py-3 border-b border-border flex items-center gap-4">
             <label
               htmlFor="status-filter"
-              className="text-sm font-medium text-gray-700"
+              className="text-sm font-medium text-foreground"
             >
               Filtrar por status:
             </label>
@@ -67,7 +67,7 @@ export default function ContentoresPage() {
               onChange={(e) =>
                 setFiltroStatus(e.target.value as StatusContentor | "TODOS")
               }
-              className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-border bg-background rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             >
               {STATUS_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -78,7 +78,7 @@ export default function ContentoresPage() {
           </div>
 
           {carregando ? (
-            <div className="px-4 py-8 text-center text-gray-500">
+            <div className="px-4 py-8 text-center text-muted-foreground">
               Carregando...
             </div>
           ) : (

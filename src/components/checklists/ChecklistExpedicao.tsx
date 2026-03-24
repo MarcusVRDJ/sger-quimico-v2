@@ -9,13 +9,13 @@ export function ChecklistExpedicaoCard({
   checklist,
 }: ChecklistExpedicaoCardProps) {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
+    <div className="bg-card rounded-lg border border-border p-4 space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-800">
+          <p className="text-sm font-medium text-foreground">
             {checklist.operadorNome}
           </p>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted-foreground">
             {new Date(checklist.dataInspecao).toLocaleString("pt-BR")}
           </p>
         </div>
@@ -29,7 +29,7 @@ export function ChecklistExpedicaoCard({
       </div>
 
       {checklist.nomeProduto && (
-        <div className="text-xs text-gray-600 space-y-1">
+        <div className="text-xs text-muted-foreground space-y-1">
           <p>
             <span className="font-medium">Produto:</span>{" "}
             {checklist.nomeProduto}
@@ -44,7 +44,7 @@ export function ChecklistExpedicaoCard({
       )}
 
       {checklist.observacoes && (
-        <p className="text-xs text-gray-600 italic">{checklist.observacoes}</p>
+        <p className="text-xs text-muted-foreground italic">{checklist.observacoes}</p>
       )}
     </div>
   );
@@ -56,7 +56,7 @@ function CheckItem({ label, ok }: { label: string; ok: boolean }) {
       <span
         className={`w-2 h-2 rounded-full ${ok ? "bg-green-500" : "bg-red-500"}`}
       />
-      <span className="text-gray-600">{label}:</span>
+      <span className="text-muted-foreground">{label}:</span>
       <span className={ok ? "text-green-600 font-medium" : "text-red-600"}>
         {ok ? "Sim" : "Não"}
       </span>

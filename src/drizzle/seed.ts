@@ -55,7 +55,6 @@ async function seed(): Promise<void> {
     .insert(schema.contentores)
     .values([
       {
-        codigo: "IBC-001",
         numeroSerie: "SN-2024-001",
         tipoContentor: "OFFSHORE",
         status: "DISPONIVEL",
@@ -68,7 +67,6 @@ async function seed(): Promise<void> {
         precisaLimpeza: false,
       },
       {
-        codigo: "IBC-002",
         numeroSerie: "SN-2024-002",
         tipoContentor: "ONSHORE_REFIL",
         status: "APROVADO_SUJO",
@@ -81,7 +79,6 @@ async function seed(): Promise<void> {
         precisaLimpeza: true,
       },
       {
-        codigo: "IBC-003",
         numeroSerie: "SN-2024-003",
         tipoContentor: "ONSHORE_BASE",
         status: "EM_LIMPEZA",
@@ -94,7 +91,6 @@ async function seed(): Promise<void> {
         precisaLimpeza: false,
       },
       {
-        codigo: "IBC-004",
         numeroSerie: "SN-2023-004",
         tipoContentor: "OFFSHORE",
         status: "REPROVADO_VENCIDO",
@@ -108,7 +104,6 @@ async function seed(): Promise<void> {
         motivoReprovacao: "Testes de pressão vencidos",
       },
       {
-        codigo: "IBC-005",
         numeroSerie: "SN-2024-005",
         tipoContentor: "ONSHORE_REFIL",
         status: "RESERVADO_PRODUCAO",

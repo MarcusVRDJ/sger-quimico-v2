@@ -6,26 +6,43 @@ interface StatCardProps {
 }
 
 function StatCard({ titulo, valor, descricao, cor = "blue" }: StatCardProps) {
-  const colors = {
-    blue: "border-blue-500 bg-blue-50",
-    green: "border-green-500 bg-green-50",
-    yellow: "border-yellow-500 bg-yellow-50",
-    red: "border-red-500 bg-red-50",
+  const styleMap = {
+    blue: {
+      surface: "bg-primary/10 dark:bg-primary/14",
+      border: "border-primary/80 dark:border-primary/70",
+      value: "text-primary",
+    },
+    green: {
+      surface: "bg-emerald-600/8 dark:bg-emerald-500/12",
+      border: "border-emerald-700/55 dark:border-emerald-500/60",
+      value: "text-emerald-700 dark:text-emerald-300",
+    },
+    yellow: {
+      surface: "bg-amber-700/7 dark:bg-amber-500/11",
+      border: "border-amber-700/55 dark:border-amber-500/60",
+      value: "text-amber-700 dark:text-amber-300",
+    },
+    red: {
+      surface: "bg-rose-700/7 dark:bg-rose-500/11",
+      border: "border-rose-700/55 dark:border-rose-500/60",
+      value: "text-rose-700 dark:text-rose-300",
+    },
   };
 
-  const textColors = {
-    blue: "text-blue-700",
-    green: "text-green-700",
-    yellow: "text-yellow-700",
-    red: "text-red-700",
-  };
+  const tone = styleMap[cor];
 
   return (
-    <div className={`rounded-lg border-l-4 p-6 ${colors[cor]} shadow-sm`}>
-      <p className="text-sm font-medium text-gray-600">{titulo}</p>
-      <p className={`text-3xl font-bold mt-2 ${textColors[cor]}`}>{valor}</p>
+    <div
+      className={`rounded-xl border p-6 shadow-sm backdrop-blur-[1px] ${tone.surface} ${tone.border}`}
+    >
+      <p className="text-sm font-medium text-foreground/75 dark:text-foreground/80">
+        {titulo}
+      </p>
+      <p className={`text-3xl font-bold mt-2 ${tone.value}`}>{valor}</p>
       {descricao && (
-        <p className="text-sm text-gray-500 mt-1">{descricao}</p>
+        <p className="text-sm text-foreground/60 dark:text-foreground/65 mt-1">
+          {descricao}
+        </p>
       )}
     </div>
   );

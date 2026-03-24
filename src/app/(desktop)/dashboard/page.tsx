@@ -46,7 +46,7 @@ export default async function DashboardPage() {
       operadorNome: checklistsRecebimento.operadorNome,
       dataInspecao: checklistsRecebimento.dataInspecao,
       statusResultante: checklistsRecebimento.statusResultante,
-      codigoContentor: contentores.codigo,
+      numeroSerieContentor: contentores.numeroSerie,
     })
     .from(checklistsRecebimento)
     .leftJoin(contentores, eq(checklistsRecebimento.contentorId, contentores.id))
@@ -70,32 +70,32 @@ export default async function DashboardPage() {
           reprovados={Number(reprovadosResult.count)}
         />
 
-        <div className="bg-white rounded-lg shadow-sm">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-base font-semibold text-gray-900">
+        <div className="bg-card border border-border rounded-lg shadow-sm">
+          <div className="px-6 py-4 border-b border-border">
+            <h3 className="text-base font-semibold text-foreground">
               Últimos Checklists de Recebimento
             </h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
               <thead>
-                <tr className="border-b border-gray-100 text-xs text-gray-500 uppercase">
+                <tr className="border-b border-border text-xs text-muted-foreground uppercase">
                   <th className="px-4 py-3">Contentor</th>
                   <th className="px-4 py-3">Operador</th>
                   <th className="px-4 py-3">Data</th>
                   <th className="px-4 py-3">Status Resultante</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-border">
                 {ultimosChecklists.map((c) => (
-                  <tr key={c.id} className="hover:bg-gray-50">
+                  <tr key={c.id} className="hover:bg-muted/40">
                     <td className="px-4 py-3 font-medium">
-                      {c.codigoContentor ?? "—"}
+                      {c.numeroSerieContentor ?? "—"}
                     </td>
-                    <td className="px-4 py-3 text-gray-600">
+                    <td className="px-4 py-3 text-muted-foreground">
                       {c.operadorNome}
                     </td>
-                    <td className="px-4 py-3 text-gray-600">
+                    <td className="px-4 py-3 text-muted-foreground">
                       {new Date(c.dataInspecao).toLocaleDateString("pt-BR")}
                     </td>
                     <td className="px-4 py-3">
@@ -107,7 +107,7 @@ export default async function DashboardPage() {
                   <tr>
                     <td
                       colSpan={4}
-                      className="px-4 py-8 text-center text-gray-500"
+                      className="px-4 py-8 text-center text-muted-foreground"
                     >
                       Nenhum checklist registrado ainda.
                     </td>

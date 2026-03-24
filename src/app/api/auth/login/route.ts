@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { usuarios, sessions } from "@/drizzle/schema";
-import { eq, and } from "drizzle-orm";
+import { usuarios } from "@/drizzle/schema";
+import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
-import { signJWT, setAuthCookie, createSession, hashToken } from "@/lib/auth";
+import { signJWT, setAuthCookie, createSession } from "@/lib/auth";
+import {
+  isMobileRequest,
+  isDeviceAllowedForPerfil,
+  deviceAccessErrorMessage,
+} from "@/lib/device-access";
 import { z } from "zod";
 
 const loginSchema = z.object({
@@ -52,6 +57,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json(
       { error: "Email ou senha inválidos" },
       { status: 401 }
+    );
+  }
+
+  const mobileRequest = isMobileRequest(request);
+
+  if (!isDeviceAllowedForPerfil(usuario.perfil, mobileRequest)) {
+    return NextResponse.json(
+      {
+        error: deviceAccessErrorMessage(usuario.perfil),
+      },
+      { status: 403 }
     );
   }
 

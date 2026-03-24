@@ -47,9 +47,9 @@ export default function UsuariosPage() {
 
   return (
     <div>
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <h2 className="text-xl font-semibold text-gray-900">Usuários</h2>
-        <p className="text-sm text-gray-500 mt-0.5">
+      <div className="bg-card border-b border-border px-6 py-4">
+        <h2 className="text-xl font-semibold text-foreground">Usuários</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">
           Gerenciamento de contas de usuário
         </p>
       </div>
@@ -61,8 +61,8 @@ export default function UsuariosPage() {
             onClick={() => setAbaAtiva("ativos")}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               abaAtiva === "ativos"
-                ? "bg-blue-600 text-white"
-                : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                ? "bg-primary text-primary-foreground"
+                : "bg-card text-foreground border border-border hover:bg-muted"
             }`}
           >
             Usuários Ativos ({usuarios.length})
@@ -71,23 +71,23 @@ export default function UsuariosPage() {
             onClick={() => setAbaAtiva("pendentes")}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               abaAtiva === "pendentes"
-                ? "bg-blue-600 text-white"
-                : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                ? "bg-primary text-primary-foreground"
+                : "bg-card text-foreground border border-border hover:bg-muted"
             }`}
           >
             Pendentes ({pendentes.length})
           </button>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm">
+        <div className="bg-card rounded-lg border border-border shadow-sm">
           {carregando ? (
-            <div className="px-4 py-8 text-center text-gray-500">
+            <div className="px-4 py-8 text-center text-muted-foreground">
               Carregando...
             </div>
           ) : abaAtiva === "ativos" ? (
             <table className="w-full text-sm text-left">
               <thead>
-                <tr className="border-b border-gray-200 text-xs text-gray-500 uppercase">
+                <tr className="border-b border-border text-xs text-muted-foreground uppercase">
                   <th className="px-4 py-3">Nome</th>
                   <th className="px-4 py-3">Email</th>
                   <th className="px-4 py-3">Perfil</th>
@@ -95,13 +95,13 @@ export default function UsuariosPage() {
                   <th className="px-4 py-3">Criado em</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-border">
                 {usuarios.map((u) => (
-                  <tr key={u.id} className="hover:bg-gray-50">
+                  <tr key={u.id} className="hover:bg-muted/40">
                     <td className="px-4 py-3 font-medium">{u.nome}</td>
-                    <td className="px-4 py-3 text-gray-600">{u.email}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
                     <td className="px-4 py-3">
-                      <span className="bg-gray-100 text-gray-700 text-xs px-2 py-0.5 rounded-full">
+                      <span className="bg-muted text-foreground text-xs px-2 py-0.5 rounded-full">
                         {perfilLabel[u.perfil] ?? u.perfil}
                       </span>
                     </td>
@@ -109,21 +109,21 @@ export default function UsuariosPage() {
                       <span
                         className={`text-xs px-2 py-0.5 rounded-full ${
                           u.ativo
-                            ? "bg-green-100 text-green-700"
-                            : "bg-gray-100 text-gray-500"
+                            ? "border border-emerald-700/40 bg-emerald-600/10 text-emerald-700 dark:border-emerald-500/45 dark:bg-emerald-500/14 dark:text-emerald-300"
+                            : "border border-border bg-muted text-muted-foreground"
                         }`}
                       >
                         {u.ativo ? "Ativo" : "Inativo"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">
+                    <td className="px-4 py-3 text-muted-foreground">
                       {new Date(u.createdAt).toLocaleDateString("pt-BR")}
                     </td>
                   </tr>
                 ))}
                 {usuarios.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                       Nenhum usuário ativo.
                     </td>
                   </tr>
@@ -133,20 +133,20 @@ export default function UsuariosPage() {
           ) : (
             <table className="w-full text-sm text-left">
               <thead>
-                <tr className="border-b border-gray-200 text-xs text-gray-500 uppercase">
+                <tr className="border-b border-border text-xs text-muted-foreground uppercase">
                   <th className="px-4 py-3">Nome</th>
                   <th className="px-4 py-3">Email</th>
                   <th className="px-4 py-3">Perfil Solicitado</th>
                   <th className="px-4 py-3">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-border">
                 {pendentes.map((u) => (
-                  <tr key={u.id} className="hover:bg-gray-50">
+                  <tr key={u.id} className="hover:bg-muted/40">
                     <td className="px-4 py-3 font-medium">{u.nome}</td>
-                    <td className="px-4 py-3 text-gray-600">{u.email}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
                     <td className="px-4 py-3">
-                      <span className="bg-gray-100 text-gray-700 text-xs px-2 py-0.5 rounded-full">
+                      <span className="bg-muted text-foreground text-xs px-2 py-0.5 rounded-full">
                         {perfilLabel[u.perfil] ?? u.perfil}
                       </span>
                     </td>
@@ -168,7 +168,7 @@ export default function UsuariosPage() {
                 ))}
                 {pendentes.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
                       Nenhuma solicitação pendente.
                     </td>
                   </tr>
