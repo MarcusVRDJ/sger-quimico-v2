@@ -17,8 +17,8 @@ const themeInitScript = `
 `;
 
 export const metadata: Metadata = {
-  title: "SGE Químico v2",
-  description: "Sistema de Gerenciamento de Contentores IBC",
+  title: "SGER Químico",
+  description: "Sistema de Gerenciamento de Embalagens Retornáveis voltado à indústria química",
 };
 
 export default function RootLayout({

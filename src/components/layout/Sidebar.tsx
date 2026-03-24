@@ -51,9 +51,9 @@ export function Sidebar({ perfil }: SidebarProps) {
   return (
     <aside className="flex flex-col w-64 min-h-screen bg-card text-foreground border-r border-border dark:bg-zinc-950 dark:text-zinc-100 dark:border-zinc-800">
       <div className="p-6 border-b border-border dark:border-zinc-800">
-        <h1 className="text-lg font-bold">SGE Químico v2</h1>
+        <h1 className="text-lg font-bold">SGER Químico</h1>
         <p className="text-xs text-muted-foreground mt-1 dark:text-zinc-400">
-          Gestão de Contentores IBC
+          Gestão de Embalagens Retornáveis
         </p>
       </div>
 
