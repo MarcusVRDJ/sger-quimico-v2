@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { QrCode } from "lucide-react";
+import { ChecklistSuccessModal } from "@/components/mobile/ChecklistSuccessModal";
 import { QrScannerModal } from "@/components/mobile/QrScannerModal";
 import { parseQrContentor } from "@/lib/qr-contentor";
 
@@ -24,6 +25,7 @@ export default function ExpedicaoPage() {
   const router = useRouter();
   const [enviando, setEnviando] = useState(false);
   const [scannerAberto, setScannerAberto] = useState(false);
+  const [modalSucessoAberto, setModalSucessoAberto] = useState(false);
   const [erro, setErro] = useState("");
   const [form, setForm] = useState<FormData>({
     numeroSerie: "",
@@ -69,7 +71,7 @@ export default function ExpedicaoPage() {
         setErro(data.error ?? "Erro ao enviar checklist");
         return;
       }
-      router.push("/mobile?sucesso=expedicao");
+      setModalSucessoAberto(true);
     } catch {
       setErro("Erro de conexão.");
     } finally {
@@ -230,6 +232,18 @@ export default function ExpedicaoPage() {
         open={scannerAberto}
         onOpenChange={setScannerAberto}
         onDecoded={onQrLido}
+      />
+
+      <ChecklistSuccessModal
+        open={modalSucessoAberto}
+        title="Checklist registrado"
+        description="O checklist de expedição foi salvo com sucesso."
+        seconds={5}
+        onFinish={() => {
+          if (!modalSucessoAberto) return;
+          setModalSucessoAberto(false);
+          router.push("/mobile?sucesso=expedicao");
+        }}
       />
     </div>
   );

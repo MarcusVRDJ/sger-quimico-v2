@@ -11,10 +11,33 @@ export interface ParsedQrResult {
   error?: string;
 }
 
+function normalizeNumericValue(value: string): string {
+  const compact = value
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "")
+    .replace(/(litros?|l|kgs?|kg)$/i, "");
+
+  if (compact.includes(".") && compact.includes(",")) {
+    // pt-BR comum: 1.234,56
+    return compact.replace(/\./g, "").replace(",", ".");
+  }
+
+  if (compact.includes(",")) {
+    return compact.replace(",", ".");
+  }
+
+  return compact;
+}
+
 function parsePositiveNumber(value: string): number | undefined {
   if (!value) return undefined;
-  const normalized = value.replace(",", ".").trim();
-  const parsed = Number(normalized);
+
+  const normalized = normalizeNumericValue(value);
+  const numericMatch = normalized.match(/\d+(?:\.\d+)?/);
+  if (!numericMatch) return undefined;
+
+  const parsed = Number(numericMatch[0]);
 
   if (!Number.isFinite(parsed) || parsed <= 0) {
     return undefined;
@@ -25,8 +48,12 @@ function parsePositiveNumber(value: string): number | undefined {
 
 function parseTara(value: string): string | undefined {
   if (!value) return undefined;
-  const normalized = value.replace(",", ".").trim();
-  const parsed = Number(normalized);
+
+  const normalized = normalizeNumericValue(value);
+  const numericMatch = normalized.match(/\d+(?:\.\d+)?/);
+  if (!numericMatch) return undefined;
+
+  const parsed = Number(numericMatch[0]);
 
   if (!Number.isFinite(parsed) || parsed <= 0) {
     return undefined;

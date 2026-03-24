@@ -18,10 +18,12 @@ export async function PATCH(
   const { id } = await params;
 
   const [requisicao] = await db
-    .select()
-    .from(requisicoesLimpeza)
+    .update(requisicoesLimpeza)
+    .set({
+      status: "CANCELADA" as const,
+    })
     .where(eq(requisicoesLimpeza.id, id))
-    .limit(1);
+    .returning();
 
   if (!requisicao) {
     return NextResponse.json(
@@ -30,24 +32,5 @@ export async function PATCH(
     );
   }
 
-  if (requisicao.status !== "PENDENTE") {
-    return NextResponse.json(
-      { error: "Requisição não está pendente" },
-      { status: 400 }
-    );
-  }
-
-  const [atualizado] = await db
-    .update(requisicoesLimpeza)
-    .set({
-      status: "EM_ANDAMENTO",
-      usuarioExecutorId: session.sub,
-      usuarioExecutorNome: session.nome,
-      usuarioExecutorEmail: session.email,
-      dataInicio: new Date(),
-    })
-    .where(eq(requisicoesLimpeza.id, id))
-    .returning();
-
-  return NextResponse.json(atualizado);
+  return NextResponse.json(requisicao);
 }

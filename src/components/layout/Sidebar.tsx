@@ -24,9 +24,10 @@ const navItems = [
     icon: Package,
   },
   {
-    href: "/limpeza",
-    label: "Requisições de Limpeza",
+    href: "/gestao-limpeza",
+    label: "Gestão de Limpeza",
     icon: Droplets,
+    adminOnly: true,
   },
   {
     href: "/usuarios",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ChecklistSuccessModal } from "@/components/mobile/ChecklistSuccessModal";
 import type { RequisicaoLimpeza } from "@/drizzle/schema";
 
 interface RequisicaoComContentor extends RequisicaoLimpeza {
@@ -11,9 +12,11 @@ export default function MobileLimpezaPage() {
   const [requisicoes, setRequisicoes] = useState<RequisicaoComContentor[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [atualizando, setAtualizando] = useState<string | null>(null);
+  const [modalSucessoAberto, setModalSucessoAberto] = useState(false);
+  const [ultimaAcao, setUltimaAcao] = useState<"iniciar" | "concluir" | null>(null);
 
   async function buscar() {
-    const res = await fetch("/api/limpeza?status=PENDENTE,EM_ANDAMENTO");
+    const res = await fetch("/api/limpeza?status=PENDENTE,EM_ANDAMENTO&executor_id=current");
     if (res.ok) {
       const data = await res.json() as RequisicaoComContentor[];
       setRequisicoes(data);
@@ -28,14 +31,16 @@ export default function MobileLimpezaPage() {
   async function iniciar(id: string) {
     setAtualizando(id);
     await fetch(`/api/limpeza/${id}/iniciar`, { method: "PATCH" });
-    await buscar();
+    setUltimaAcao("iniciar");
+    setModalSucessoAberto(true);
     setAtualizando(null);
   }
 
   async function concluir(id: string) {
     setAtualizando(id);
     await fetch(`/api/limpeza/${id}/concluir`, { method: "PATCH" });
-    await buscar();
+    setUltimaAcao("concluir");
+    setModalSucessoAberto(true);
     setAtualizando(null);
   }
 
@@ -51,9 +56,9 @@ export default function MobileLimpezaPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="bg-card border-b border-border shadow-sm px-4 pt-6 pb-4">
-        <h1 className="text-lg font-bold text-foreground">Limpeza</h1>
+        <h1 className="text-lg font-bold text-foreground">Minhas Limpezas</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Requisições pendentes e em andamento
+          Tarefas designadas para você
         </p>
       </div>
 
@@ -62,7 +67,7 @@ export default function MobileLimpezaPage() {
           <p className="text-center text-muted-foreground py-8">Carregando...</p>
         ) : requisicoes.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Nenhuma requisição de limpeza.</p>
+            <p className="text-muted-foreground">Nenhuma limpeza designada para você.</p>
           </div>
         ) : (
           requisicoes.map((r) => (
@@ -109,9 +114,7 @@ export default function MobileLimpezaPage() {
                     disabled={atualizando === r.id}
                     className="w-full bg-green-600 disabled:opacity-50 text-white font-semibold py-3 rounded-xl"
                   >
-                    {atualizando === r.id
-                      ? "Atualizando..."
-                      : "Concluir Limpeza"}
+                    {atualizando === r.id ? "Atualizando..." : "Concluir Limpeza"}
                   </button>
                 )}
               </div>
@@ -119,6 +122,22 @@ export default function MobileLimpezaPage() {
           ))
         )}
       </div>
+
+      <ChecklistSuccessModal
+        open={modalSucessoAberto}
+        title={ultimaAcao === "iniciar" ? "Limpeza iniciada" : "Limpeza concluída"}
+        description={
+          ultimaAcao === "iniciar"
+            ? "A limpeza foi iniciada com sucesso."
+            : "A limpeza foi finalizada com sucesso."
+        }
+        seconds={5}
+        onFinish={() => {
+          if (!modalSucessoAberto) return;
+          setModalSucessoAberto(false);
+          void buscar();
+        }}
+      />
     </div>
   );
 }

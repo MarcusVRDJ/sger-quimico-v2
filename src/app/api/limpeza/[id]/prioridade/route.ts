@@ -3,6 +3,11 @@ import { db } from "@/lib/db";
 import { requisicoesLimpeza } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth";
+import { z } from "zod";
+
+const prioridadeSchema = z.object({
+  prioridade: z.enum(["BAIXA", "MEDIA", "ALTA", "URGENTE"]),
+});
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -17,11 +22,20 @@ export async function PATCH(
 
   const { id } = await params;
 
+  const body = await request.json() as unknown;
+  const parsed = prioridadeSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
+  }
+
   const [requisicao] = await db
-    .select()
-    .from(requisicoesLimpeza)
+    .update(requisicoesLimpeza)
+    .set({
+      prioridade: parsed.data.prioridade,
+    })
     .where(eq(requisicoesLimpeza.id, id))
-    .limit(1);
+    .returning();
 
   if (!requisicao) {
     return NextResponse.json(
@@ -30,24 +44,5 @@ export async function PATCH(
     );
   }
 
-  if (requisicao.status !== "PENDENTE") {
-    return NextResponse.json(
-      { error: "Requisição não está pendente" },
-      { status: 400 }
-    );
-  }
-
-  const [atualizado] = await db
-    .update(requisicoesLimpeza)
-    .set({
-      status: "EM_ANDAMENTO",
-      usuarioExecutorId: session.sub,
-      usuarioExecutorNome: session.nome,
-      usuarioExecutorEmail: session.email,
-      dataInicio: new Date(),
-    })
-    .where(eq(requisicoesLimpeza.id, id))
-    .returning();
-
-  return NextResponse.json(atualizado);
+  return NextResponse.json(requisicao);
 }

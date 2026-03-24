@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { QrCode } from "lucide-react";
 import { StatusBadge } from "@/components/contentores/StatusBadge";
 import { QrScannerModal } from "@/components/mobile/QrScannerModal";
+import { ChecklistSuccessModal } from "@/components/mobile/ChecklistSuccessModal";
 import type { StatusContentor } from "@/drizzle/schema";
 import { parseQrContentor } from "@/lib/qr-contentor";
 
@@ -37,6 +38,7 @@ export default function RecebimentoPage() {
   const [etapa, setEtapa] = useState(0);
   const [enviando, setEnviando] = useState(false);
   const [scannerAberto, setScannerAberto] = useState(false);
+  const [modalSucessoAberto, setModalSucessoAberto] = useState(false);
   const [infoNumeroSerie, setInfoNumeroSerie] = useState("");
   const [erro, setErro] = useState("");
   const [respostas, setRespostas] = useState<Respostas>({
@@ -92,7 +94,7 @@ export default function RecebimentoPage() {
         setErro(data.error ?? "Erro ao enviar checklist");
         return;
       }
-      router.push("/mobile?sucesso=recebimento");
+      setModalSucessoAberto(true);
     } catch {
       setErro("Erro de conexão. Tente novamente.");
     } finally {
@@ -454,6 +456,18 @@ export default function RecebimentoPage() {
         open={scannerAberto}
         onOpenChange={setScannerAberto}
         onDecoded={onQrLido}
+      />
+
+      <ChecklistSuccessModal
+        open={modalSucessoAberto}
+        title="Checklist registrado"
+        description="O checklist de recebimento foi salvo com sucesso."
+        seconds={5}
+        onFinish={() => {
+          if (!modalSucessoAberto) return;
+          setModalSucessoAberto(false);
+          router.push("/mobile?sucesso=recebimento");
+        }}
       />
     </div>
   );
