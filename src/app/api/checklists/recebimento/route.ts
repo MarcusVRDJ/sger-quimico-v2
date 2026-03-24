@@ -11,8 +11,11 @@ import { calcularStatusRecebimento } from "@/lib/checklist-logic";
 import { z } from "zod";
 
 const checklistSchema = z.object({
-  codigo: z.string().min(1),
+  numeroSerie: z.string().min(1),
   tipoContentor: z.enum(["OFFSHORE", "ONSHORE_REFIL", "ONSHORE_BASE"]),
+  fabricante: z.string().optional(),
+  capacidadeLitros: z.number().int().positive().optional(),
+  tara: z.string().optional(),
   avarias: z.boolean(),
   lacreRoto: z.boolean(),
   testesVencidos: z.boolean(),
@@ -38,8 +41,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const {
-    codigo,
+    numeroSerie,
     tipoContentor,
+    fabricante,
+    capacidadeLitros,
+    tara,
     avarias,
     lacreRoto,
     testesVencidos,
@@ -50,18 +56,52 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     dataUltimaInspecao,
   } = parsed.data;
 
-  // Busca o contentor pelo código
-  const [contentor] = await db
+  // Busca contentor por numero de serie
+  let [contentor] = await db
     .select()
     .from(contentores)
-    .where(eq(contentores.codigo, codigo))
+    .where(eq(contentores.numeroSerie, numeroSerie))
     .limit(1);
 
   if (!contentor) {
-    return NextResponse.json(
-      { error: `Contentor com código "${codigo}" não encontrado` },
-      { status: 404 }
-    );
+    [contentor] = await db
+      .insert(contentores)
+      .values({
+        numeroSerie,
+        tipoContentor,
+        fabricante,
+        capacidadeLitros,
+        tara,
+        status: "DISPONIVEL",
+      })
+      .returning();
+  } else {
+    const updates: Partial<
+      Pick<typeof contentores.$inferInsert, "fabricante" | "capacidadeLitros" | "tara">
+    > = {};
+
+    if (fabricante && fabricante !== contentor.fabricante) {
+      updates.fabricante = fabricante;
+    }
+
+    if (
+      typeof capacidadeLitros === "number" &&
+      capacidadeLitros !== contentor.capacidadeLitros
+    ) {
+      updates.capacidadeLitros = capacidadeLitros;
+    }
+
+    if (tara && tara !== contentor.tara) {
+      updates.tara = tara;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      [contentor] = await db
+        .update(contentores)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(contentores.id, contentor.id))
+        .returning();
+    }
   }
 
   const respostas = { avarias, lacreRoto, testesVencidos, produtoAnterior, residuos };

@@ -7,55 +7,68 @@ const statusConfig: Record<
 > = {
   APROVADO: {
     label: "Aprovado",
-    className: "bg-green-100 text-green-800",
+    className:
+      "border border-emerald-700/40 bg-emerald-600/10 text-emerald-700 dark:border-emerald-500/45 dark:bg-emerald-500/14 dark:text-emerald-300",
   },
   APROVADO_SUJO: {
     label: "Aprovado (Sujo)",
-    className: "bg-yellow-100 text-yellow-800",
+    className:
+      "border border-amber-700/40 bg-amber-700/8 text-amber-700 dark:border-amber-500/45 dark:bg-amber-500/12 dark:text-amber-300",
   },
   REPROVADO_VENCIDO: {
     label: "Reprovado — Vencido",
-    className: "bg-red-100 text-red-800",
+    className:
+      "border border-rose-700/40 bg-rose-700/8 text-rose-700 dark:border-rose-500/45 dark:bg-rose-500/12 dark:text-rose-300",
   },
   REPROVADO_INTEGRIDADE: {
     label: "Reprovado — Integridade",
-    className: "bg-red-100 text-red-800",
+    className:
+      "border border-rose-700/40 bg-rose-700/8 text-rose-700 dark:border-rose-500/45 dark:bg-rose-500/12 dark:text-rose-300",
   },
   RESERVADO_PRODUCAO: {
     label: "Reservado p/ Produção",
-    className: "bg-blue-100 text-blue-800",
+    className:
+      "border border-primary/50 bg-primary/12 text-primary dark:border-primary/55 dark:bg-primary/16",
   },
   RESERVADO_PRODUCAO_EM_LIMPEZA: {
     label: "Reservado p/ Produção (Em Limpeza)",
-    className: "bg-blue-100 text-blue-800",
+    className:
+      "border border-primary/50 bg-primary/12 text-primary dark:border-primary/55 dark:bg-primary/16",
   },
   EM_LIMPEZA: {
     label: "Em Limpeza",
-    className: "bg-purple-100 text-purple-800",
+    className:
+      "border border-violet-700/40 bg-violet-700/8 text-violet-700 dark:border-violet-500/45 dark:bg-violet-500/12 dark:text-violet-300",
   },
   MANUTENCAO_INTERNA: {
     label: "Manutenção Interna",
-    className: "bg-orange-100 text-orange-800",
+    className:
+      "border border-orange-700/40 bg-orange-700/8 text-orange-700 dark:border-orange-500/45 dark:bg-orange-500/12 dark:text-orange-300",
   },
   RESERVADO_USO_INTERNO: {
     label: "Reservado p/ Uso Interno",
-    className: "bg-indigo-100 text-indigo-800",
+    className:
+      "border border-sky-700/40 bg-sky-700/8 text-sky-700 dark:border-sky-500/45 dark:bg-sky-500/12 dark:text-sky-300",
   },
   DISPONIVEL: {
     label: "Disponível",
-    className: "bg-green-100 text-green-800",
+    className:
+      "border border-emerald-700/40 bg-emerald-600/10 text-emerald-700 dark:border-emerald-500/45 dark:bg-emerald-500/14 dark:text-emerald-300",
   },
   EM_CICLO: {
     label: "Em Ciclo",
-    className: "bg-teal-100 text-teal-800",
+    className:
+      "border border-teal-700/40 bg-teal-700/8 text-teal-700 dark:border-teal-500/45 dark:bg-teal-500/12 dark:text-teal-300",
   },
   MANUTENCAO_EXTERNA: {
     label: "Manutenção Externa",
-    className: "bg-orange-100 text-orange-800",
+    className:
+      "border border-orange-700/40 bg-orange-700/8 text-orange-700 dark:border-orange-500/45 dark:bg-orange-500/12 dark:text-orange-300",
   },
   RETIDO: {
     label: "Retido",
-    className: "bg-red-100 text-red-800",
+    className:
+      "border border-rose-700/40 bg-rose-700/8 text-rose-700 dark:border-rose-500/45 dark:bg-rose-500/12 dark:text-rose-300",
   },
 };
 

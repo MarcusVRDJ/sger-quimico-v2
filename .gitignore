@@ -1,9 +1,8 @@
 .env
 .env.local
 .env.production
-.env.example
 node_modules/
 .next/
+.next_root_owned_backup_*/
 dist/
-drizzle/migrations/
 tsconfig.tsbuildinfo

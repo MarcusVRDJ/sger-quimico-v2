@@ -79,8 +79,7 @@ export const sessions = pgTable("sessions", {
 
 export const contentores = pgTable("contentores", {
   id: uuid("id").defaultRandom().primaryKey(),
-  codigo: text("codigo").notNull().unique(),
-  numeroSerie: text("numero_serie").notNull(),
+  numeroSerie: text("numero_serie").notNull().unique(),
   tara: decimal("tara", { precision: 10, scale: 2 }),
   dataValidade: timestamp("data_validade"),
   dataUltimaInspecao: timestamp("data_ultima_inspecao"),

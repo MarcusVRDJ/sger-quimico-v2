@@ -2,9 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { QrCode } from "lucide-react";
+import { ChecklistSuccessModal } from "@/components/mobile/ChecklistSuccessModal";
+import { QrScannerModal } from "@/components/mobile/QrScannerModal";
+import { parseQrContentor } from "@/lib/qr-contentor";
 
 interface FormData {
-  codigo: string;
+  numeroSerie: string;
   tampaOk: boolean;
   vedacaoOk: boolean;
   lacresIntactos: boolean;
@@ -20,9 +24,11 @@ interface FormData {
 export default function ExpedicaoPage() {
   const router = useRouter();
   const [enviando, setEnviando] = useState(false);
+  const [scannerAberto, setScannerAberto] = useState(false);
+  const [modalSucessoAberto, setModalSucessoAberto] = useState(false);
   const [erro, setErro] = useState("");
   const [form, setForm] = useState<FormData>({
-    codigo: "",
+    numeroSerie: "",
     tampaOk: false,
     vedacaoOk: false,
     lacresIntactos: false,
@@ -37,6 +43,17 @@ export default function ExpedicaoPage() {
 
   function set<K extends keyof FormData>(key: K, value: FormData[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function onQrLido(rawValue: string) {
+    const parsed = parseQrContentor(rawValue);
+    if (!parsed.ok || !parsed.data) {
+      setErro(parsed.error ?? "QR inválido. Informe o número de série manualmente.");
+      return;
+    }
+
+    setErro("");
+    set("numeroSerie", parsed.data.numeroSerie);
   }
 
   async function enviar(e: React.FormEvent) {
@@ -54,7 +71,7 @@ export default function ExpedicaoPage() {
         setErro(data.error ?? "Erro ao enviar checklist");
         return;
       }
-      router.push("/mobile?sucesso=expedicao");
+      setModalSucessoAberto(true);
     } catch {
       setErro("Erro de conexão.");
     } finally {
@@ -63,12 +80,12 @@ export default function ExpedicaoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm px-4 pt-6 pb-4">
-        <h1 className="text-lg font-bold text-gray-900">
+    <div className="min-h-screen bg-background">
+      <div className="bg-card border-b border-border shadow-sm px-4 pt-6 pb-4">
+        <h1 className="text-lg font-bold text-foreground">
           Checklist Expedição
         </h1>
-        <p className="text-sm text-gray-500 mt-1">EXPED-001</p>
+        <p className="text-sm text-muted-foreground mt-1">EXPED-001</p>
       </div>
 
       <form onSubmit={enviar} className="px-4 py-6 space-y-6 pb-24">
@@ -80,27 +97,37 @@ export default function ExpedicaoPage() {
 
         {/* Identificação */}
         <section className="space-y-4">
-          <h2 className="text-base font-semibold text-gray-900">
+          <h2 className="text-base font-semibold text-foreground">
             Identificação
           </h2>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Código do Contentor *
+            <label className="block text-sm font-medium text-foreground mb-2">
+              Número de Série *
             </label>
-            <input
-              type="text"
-              required
-              value={form.codigo}
-              onChange={(e) => set("codigo", e.target.value)}
-              placeholder="Ex: IBC-001"
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                required
+                value={form.numeroSerie}
+                onChange={(e) => set("numeroSerie", e.target.value)}
+                placeholder="Ex: SN-2024-001"
+                className="w-full border border-border bg-background rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              <button
+                type="button"
+                onClick={() => setScannerAberto(true)}
+                className="shrink-0 inline-flex items-center gap-2 rounded-xl border border-border px-3 py-3 text-sm font-medium text-foreground bg-card"
+              >
+                <QrCode className="h-4 w-4" />
+                QR
+              </button>
+            </div>
           </div>
         </section>
 
         {/* Inspeção */}
         <section className="space-y-3">
-          <h2 className="text-base font-semibold text-gray-900">Inspeção</h2>
+          <h2 className="text-base font-semibold text-foreground">Inspeção</h2>
           <ToggleRow
             label="Tampa OK?"
             checked={form.tampaOk}
@@ -120,7 +147,7 @@ export default function ExpedicaoPage() {
 
         {/* Produto */}
         <section className="space-y-4">
-          <h2 className="text-base font-semibold text-gray-900">Produto</h2>
+          <h2 className="text-base font-semibold text-foreground">Produto</h2>
           <InputField
             label="Nome do Produto"
             value={form.nomeProduto}
@@ -150,9 +177,9 @@ export default function ExpedicaoPage() {
 
         {/* Destino */}
         <section className="space-y-4">
-          <h2 className="text-base font-semibold text-gray-900">Destino</h2>
+          <h2 className="text-base font-semibold text-foreground">Destino</h2>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Tipo de Destino *
             </label>
             <select
@@ -161,7 +188,7 @@ export default function ExpedicaoPage() {
               onChange={(e) =>
                 set("tipoDestino", e.target.value as FormData["tipoDestino"])
               }
-              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-border bg-background rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">Selecione...</option>
               <option value="CLIENTE">Cliente</option>
@@ -180,7 +207,7 @@ export default function ExpedicaoPage() {
 
         {/* Observações */}
         <section>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             Observações
           </label>
           <textarea
@@ -188,7 +215,7 @@ export default function ExpedicaoPage() {
             onChange={(e) => set("observacoes", e.target.value)}
             rows={3}
             placeholder="Alguma observação adicional..."
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full border border-border bg-background rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-ring resize-none"
           />
         </section>
 
@@ -200,6 +227,24 @@ export default function ExpedicaoPage() {
           {enviando ? "Enviando..." : "Finalizar Expedição"}
         </button>
       </form>
+
+      <QrScannerModal
+        open={scannerAberto}
+        onOpenChange={setScannerAberto}
+        onDecoded={onQrLido}
+      />
+
+      <ChecklistSuccessModal
+        open={modalSucessoAberto}
+        title="Checklist registrado"
+        description="O checklist de expedição foi salvo com sucesso."
+        seconds={5}
+        onFinish={() => {
+          if (!modalSucessoAberto) return;
+          setModalSucessoAberto(false);
+          router.push("/mobile?sucesso=expedicao");
+        }}
+      />
     </div>
   );
 }
@@ -218,13 +263,13 @@ function ToggleRow({
       type="button"
       onClick={() => onChange(!checked)}
       className={`w-full flex items-center justify-between rounded-xl border-2 px-4 py-4 text-left transition-colors ${
-        checked ? "border-green-400 bg-green-50" : "border-gray-200 bg-white"
+        checked ? "border-green-400 bg-green-50" : "border-border bg-card"
       }`}
     >
-      <span className="text-base font-medium text-gray-800">{label}</span>
+      <span className="text-base font-medium text-foreground">{label}</span>
       <span
         className={`text-sm font-semibold ${
-          checked ? "text-green-600" : "text-gray-400"
+          checked ? "text-green-600" : "text-muted-foreground"
         }`}
       >
         {checked ? "Sim" : "Não"}
@@ -248,7 +293,7 @@ function InputField({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
+      <label className="block text-sm font-medium text-foreground mb-2">
         {label}
       </label>
       <input
@@ -256,7 +301,7 @@ function InputField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full border border-border bg-background rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-ring"
       />
     </div>
   );

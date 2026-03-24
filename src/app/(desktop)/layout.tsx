@@ -18,7 +18,7 @@ export default async function DesktopLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-background">
       <Sidebar perfil={session.perfil} />
       <div className="flex-1 flex flex-col min-w-0">
         {children}

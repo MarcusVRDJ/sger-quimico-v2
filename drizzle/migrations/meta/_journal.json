@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1774234684054,
+      "tag": "0000_lethal_shard",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1774308000000,
+      "tag": "0001_numero_serie_identificador",
+      "breakpoints": true
+    }
+  ]
+}

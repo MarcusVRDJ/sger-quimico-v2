@@ -2,8 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { QrCode } from "lucide-react";
 import { StatusBadge } from "@/components/contentores/StatusBadge";
+import { QrScannerModal } from "@/components/mobile/QrScannerModal";
+import { ChecklistSuccessModal } from "@/components/mobile/ChecklistSuccessModal";
 import type { StatusContentor } from "@/drizzle/schema";
+import { parseQrContentor } from "@/lib/qr-contentor";
 
 const ETAPAS = [
   "Identificação",
@@ -14,8 +18,11 @@ const ETAPAS = [
 ];
 
 interface Respostas {
-  codigo: string;
+  numeroSerie: string;
   tipoContentor: "OFFSHORE" | "ONSHORE_REFIL" | "ONSHORE_BASE" | "";
+  fabricante: string;
+  capacidadeLitros: string;
+  tara: string;
   avarias: boolean;
   lacreRoto: boolean;
   testesVencidos: boolean;
@@ -30,10 +37,16 @@ export default function RecebimentoPage() {
   const router = useRouter();
   const [etapa, setEtapa] = useState(0);
   const [enviando, setEnviando] = useState(false);
+  const [scannerAberto, setScannerAberto] = useState(false);
+  const [modalSucessoAberto, setModalSucessoAberto] = useState(false);
+  const [infoNumeroSerie, setInfoNumeroSerie] = useState("");
   const [erro, setErro] = useState("");
   const [respostas, setRespostas] = useState<Respostas>({
-    codigo: "",
+    numeroSerie: "",
     tipoContentor: "",
+    fabricante: "",
+    capacidadeLitros: "",
+    tara: "",
     avarias: false,
     lacreRoto: false,
     testesVencidos: false,
@@ -60,17 +73,28 @@ export default function RecebimentoPage() {
     setEnviando(true);
     setErro("");
     try {
+      const capacidadeLitros = respostas.capacidadeLitros
+        ? Number(respostas.capacidadeLitros)
+        : undefined;
+
       const res = await fetch("/api/checklists/recebimento", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(respostas),
+        body: JSON.stringify({
+          ...respostas,
+          capacidadeLitros: Number.isFinite(capacidadeLitros)
+            ? Math.trunc(capacidadeLitros as number)
+            : undefined,
+          fabricante: respostas.fabricante || undefined,
+          tara: respostas.tara || undefined,
+        }),
       });
       const data = await res.json() as { error?: string };
       if (!res.ok) {
         setErro(data.error ?? "Erro ao enviar checklist");
         return;
       }
-      router.push("/mobile?sucesso=recebimento");
+      setModalSucessoAberto(true);
     } catch {
       setErro("Erro de conexão. Tente novamente.");
     } finally {
@@ -78,11 +102,82 @@ export default function RecebimentoPage() {
     }
   }
 
+  async function buscarNumeroSerie(numeroSerie: string) {
+    if (!numeroSerie) return;
+
+    try {
+      const res = await fetch(
+        `/api/contentores/busca?numeroSerie=${encodeURIComponent(numeroSerie)}`
+      );
+
+      if (res.ok) {
+        const data = (await res.json()) as {
+          contentor?: {
+            tipoContentor: Respostas["tipoContentor"];
+            fabricante: string | null;
+            capacidadeLitros: number | null;
+            tara: string | null;
+          };
+        };
+
+        setInfoNumeroSerie("Contentor já cadastrado. Os dados foram carregados.");
+
+        if (data.contentor) {
+          setRespostas((prev) => ({
+            ...prev,
+            tipoContentor: prev.tipoContentor || data.contentor?.tipoContentor || "",
+            fabricante: prev.fabricante || data.contentor?.fabricante || "",
+            capacidadeLitros:
+              prev.capacidadeLitros ||
+              (data.contentor?.capacidadeLitros
+                ? String(data.contentor.capacidadeLitros)
+                : ""),
+            tara: prev.tara || data.contentor?.tara || "",
+          }));
+        }
+        return;
+      }
+
+      if (res.status === 404) {
+        setInfoNumeroSerie(
+          "Número de série não encontrado. O contentor será criado ao finalizar o checklist."
+        );
+        return;
+      }
+
+      setInfoNumeroSerie("");
+    } catch {
+      setInfoNumeroSerie("");
+    }
+  }
+
+  function onQrLido(rawValue: string) {
+    const parsed = parseQrContentor(rawValue);
+
+    if (!parsed.ok || !parsed.data) {
+      setErro(parsed.error ?? "QR inválido. Confira os dados e corrija manualmente.");
+      return;
+    }
+
+    setErro("");
+    setRespostas((prev) => ({
+      ...prev,
+      numeroSerie: parsed.data?.numeroSerie ?? prev.numeroSerie,
+      fabricante: parsed.data?.fabricante ?? prev.fabricante,
+      capacidadeLitros: parsed.data?.capacidadeLitros
+        ? String(parsed.data.capacidadeLitros)
+        : prev.capacidadeLitros,
+      tara: parsed.data?.tara ?? prev.tara,
+    }));
+
+    void buscarNumeroSerie(parsed.data.numeroSerie);
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header com progresso */}
-      <div className="bg-white shadow-sm px-4 pt-6 pb-4">
-        <h1 className="text-lg font-bold text-gray-900 mb-4">
+      <div className="bg-card border-b border-border shadow-sm px-4 pt-6 pb-4">
+        <h1 className="text-lg font-bold text-foreground mb-4">
           Checklist Recebimento
         </h1>
         {/* Barra de progresso */}
@@ -91,12 +186,12 @@ export default function RecebimentoPage() {
             <div
               key={i}
               className={`h-1.5 flex-1 rounded-full transition-colors ${
-                i <= etapa ? "bg-blue-600" : "bg-gray-200"
+                i <= etapa ? "bg-primary" : "bg-border"
               }`}
             />
           ))}
         </div>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted-foreground">
           Etapa {etapa + 1} de {ETAPAS.length}: <strong>{ETAPAS[etapa]}</strong>
         </p>
       </div>
@@ -112,19 +207,33 @@ export default function RecebimentoPage() {
         {etapa === 0 && (
           <div className="space-y-5">
             <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">
-                Código do Contentor *
+              <label className="block text-sm font-semibold text-foreground mb-2">
+                Número de Série *
               </label>
-              <input
-                type="text"
-                value={respostas.codigo}
-                onChange={(e) => set("codigo", e.target.value)}
-                placeholder="Ex: IBC-001"
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={respostas.numeroSerie}
+                  onChange={(e) => set("numeroSerie", e.target.value)}
+                  onBlur={(e) => void buscarNumeroSerie(e.target.value.trim())}
+                  placeholder="Ex: SN-2024-001"
+                  className="w-full border border-border bg-background rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                <button
+                  type="button"
+                  onClick={() => setScannerAberto(true)}
+                  className="shrink-0 inline-flex items-center gap-2 rounded-xl border border-border px-3 py-3 text-sm font-medium text-foreground bg-card"
+                >
+                  <QrCode className="h-4 w-4" />
+                  QR
+                </button>
+              </div>
+              {infoNumeroSerie && (
+                <p className="text-xs text-muted-foreground mt-2">{infoNumeroSerie}</p>
+              )}
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">
+              <label className="block text-sm font-semibold text-foreground mb-2">
                 Tipo de Contentor *
               </label>
               <select
@@ -135,7 +244,7 @@ export default function RecebimentoPage() {
                     e.target.value as Respostas["tipoContentor"]
                   )
                 }
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-border bg-background rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="">Selecione...</option>
                 <option value="OFFSHORE">Offshore</option>
@@ -143,13 +252,56 @@ export default function RecebimentoPage() {
                 <option value="ONSHORE_BASE">Onshore (Base)</option>
               </select>
             </div>
+
+            <div className="pt-2 border-t border-border space-y-4">
+              <p className="text-xs text-muted-foreground">
+                Dados do QR (editáveis)
+              </p>
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-2">
+                  Fabricante
+                </label>
+                <input
+                  type="text"
+                  value={respostas.fabricante}
+                  onChange={(e) => set("fabricante", e.target.value)}
+                  placeholder="Ex: Schutz"
+                  className="w-full border border-border bg-background rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-2">
+                  Capacidade (L)
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  value={respostas.capacidadeLitros}
+                  onChange={(e) => set("capacidadeLitros", e.target.value)}
+                  placeholder="Ex: 1000"
+                  className="w-full border border-border bg-background rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-2">
+                  Tara (kg)
+                </label>
+                <input
+                  type="text"
+                  value={respostas.tara}
+                  onChange={(e) => set("tara", e.target.value)}
+                  placeholder="Ex: 250.00"
+                  className="w-full border border-border bg-background rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+            </div>
           </div>
         )}
 
         {/* Etapa 1: Inspeção Externa */}
         {etapa === 1 && (
           <div className="space-y-4">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Verifique o estado externo do contentor.
             </p>
             <CheckItem
@@ -168,7 +320,7 @@ export default function RecebimentoPage() {
         {/* Etapa 2: Inspeção Interna */}
         {etapa === 2 && (
           <div className="space-y-4">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Verifique o estado interno do contentor.
             </p>
             <CheckItem
@@ -193,25 +345,25 @@ export default function RecebimentoPage() {
               onChange={(v) => set("testesVencidos", v)}
             />
             <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">
+              <label className="block text-sm font-semibold text-foreground mb-2">
                 Data de Validade do Contentor
               </label>
               <input
                 type="date"
                 value={respostas.dataValidade}
                 onChange={(e) => set("dataValidade", e.target.value)}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-border bg-background rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">
+              <label className="block text-sm font-semibold text-foreground mb-2">
                 Data Última Inspeção
               </label>
               <input
                 type="date"
                 value={respostas.dataUltimaInspecao}
                 onChange={(e) => set("dataUltimaInspecao", e.target.value)}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-border bg-background rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
           </div>
@@ -220,10 +372,16 @@ export default function RecebimentoPage() {
         {/* Etapa 4: Revisão */}
         {etapa === 4 && (
           <div className="space-y-5">
-            <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
-              <h3 className="font-semibold text-gray-900">Resumo</h3>
-              <Row label="Código" value={respostas.codigo || "—"} />
+            <div className="bg-card rounded-xl border border-border p-4 space-y-3">
+              <h3 className="font-semibold text-foreground">Resumo</h3>
+              <Row label="Nº Série" value={respostas.numeroSerie || "—"} />
               <Row label="Tipo" value={tipoLabel(respostas.tipoContentor)} />
+              <Row label="Fabricante" value={respostas.fabricante || "—"} />
+              <Row
+                label="Capacidade"
+                value={respostas.capacidadeLitros ? `${respostas.capacidadeLitros} L` : "—"}
+              />
+              <Row label="Tara" value={respostas.tara ? `${respostas.tara} kg` : "—"} />
               <Row label="Avarias" value={respostas.avarias ? "Sim" : "Não"} />
               <Row
                 label="Lacre Roto"
@@ -242,12 +400,12 @@ export default function RecebimentoPage() {
                 value={respostas.testesVencidos ? "Sim" : "Não"}
               />
               <div className="pt-2">
-                <p className="text-xs text-gray-500 mb-1">Status Resultante:</p>
+                <p className="text-xs text-muted-foreground mb-1">Status Resultante:</p>
                 <StatusBadge status={statusPreview()} />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-800 mb-2">
+              <label className="block text-sm font-semibold text-foreground mb-2">
                 Observações (opcional)
               </label>
               <textarea
@@ -255,7 +413,7 @@ export default function RecebimentoPage() {
                 onChange={(e) => set("observacoes", e.target.value)}
                 rows={3}
                 placeholder="Alguma observação adicional..."
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                className="w-full border border-border bg-background rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-ring resize-none"
               />
             </div>
           </div>
@@ -263,11 +421,11 @@ export default function RecebimentoPage() {
       </div>
 
       {/* Botões de navegação */}
-      <div className="fixed bottom-20 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 flex gap-3">
+      <div className="fixed bottom-20 left-0 right-0 bg-card border-t border-border px-4 py-3 flex gap-3">
         {etapa > 0 && (
           <button
             onClick={() => setEtapa((e) => e - 1)}
-            className="flex-1 border border-gray-300 text-gray-700 font-semibold py-3 rounded-xl text-base"
+            className="flex-1 border border-border text-foreground font-semibold py-3 rounded-xl text-base"
           >
             Anterior
           </button>
@@ -277,9 +435,9 @@ export default function RecebimentoPage() {
             onClick={() => setEtapa((e) => e + 1)}
             disabled={
               etapa === 0 &&
-              (!respostas.codigo || !respostas.tipoContentor)
+              (!respostas.numeroSerie || !respostas.tipoContentor)
             }
-            className="flex-1 bg-blue-600 disabled:opacity-50 text-white font-semibold py-3 rounded-xl text-base"
+            className="flex-1 bg-primary disabled:opacity-50 text-primary-foreground font-semibold py-3 rounded-xl text-base"
           >
             Próximo
           </button>
@@ -293,6 +451,24 @@ export default function RecebimentoPage() {
           </button>
         )}
       </div>
+
+      <QrScannerModal
+        open={scannerAberto}
+        onOpenChange={setScannerAberto}
+        onDecoded={onQrLido}
+      />
+
+      <ChecklistSuccessModal
+        open={modalSucessoAberto}
+        title="Checklist registrado"
+        description="O checklist de recebimento foi salvo com sucesso."
+        seconds={5}
+        onFinish={() => {
+          if (!modalSucessoAberto) return;
+          setModalSucessoAberto(false);
+          router.push("/mobile?sucesso=recebimento");
+        }}
+      />
     </div>
   );
 }
@@ -312,13 +488,13 @@ function CheckItem({
       className={`w-full flex items-center justify-between rounded-xl border-2 px-4 py-4 text-left transition-colors ${
         checked
           ? "border-red-400 bg-red-50"
-          : "border-gray-200 bg-white"
+          : "border-border bg-card"
       }`}
     >
-      <span className="text-base font-medium text-gray-800">{label}</span>
+      <span className="text-base font-medium text-foreground">{label}</span>
       <span
         className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-          checked ? "border-red-500 bg-red-500" : "border-gray-300"
+          checked ? "border-red-500 bg-red-500" : "border-border"
         }`}
       >
         {checked && (
@@ -344,8 +520,8 @@ function CheckItem({
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between text-sm">
-      <span className="text-gray-500">{label}</span>
-      <span className="font-medium text-gray-800">{value}</span>
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium text-foreground">{value}</span>
     </div>
   );
 }

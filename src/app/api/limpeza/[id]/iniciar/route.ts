@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requisicoesLimpeza, contentores } from "@/drizzle/schema";
+import { requisicoesLimpeza } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth";
 

@@ -45,20 +45,19 @@ export default async function ContentorDetailPage({ params }: PageProps) {
   return (
     <div>
       <Header
-        titulo={`Contentor ${contentor.codigo}`}
-        subtitulo={`Nº Série: ${contentor.numeroSerie}`}
+        titulo={`Contentor ${contentor.numeroSerie}`}
+        subtitulo="Detalhes do contentor"
         usuarioNome={session?.nome ?? ""}
         usuarioPerfil={session?.perfil ?? ""}
       />
 
       <main className="p-6 space-y-6">
         {/* Informações gerais */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-base font-semibold text-gray-900 mb-4">
+        <div className="bg-card border border-border rounded-lg shadow-sm p-6">
+          <h3 className="text-base font-semibold text-foreground mb-4">
             Informações Gerais
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <Field label="Código" value={contentor.codigo} />
             <Field label="Nº Série" value={contentor.numeroSerie} />
             <Field label="Status">
               <StatusBadge status={contentor.status} />
@@ -109,10 +108,10 @@ export default async function ContentorDetailPage({ params }: PageProps) {
           </div>
           {contentor.observacoes && (
             <div className="mt-4">
-              <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
                 Observações
               </p>
-              <p className="text-sm text-gray-700 mt-1">
+              <p className="text-sm text-foreground mt-1">
                 {contentor.observacoes}
               </p>
             </div>
@@ -120,25 +119,25 @@ export default async function ContentorDetailPage({ params }: PageProps) {
         </div>
 
         {/* Histórico de status */}
-        <div className="bg-white rounded-lg shadow-sm">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-base font-semibold text-gray-900">
+        <div className="bg-card border border-border rounded-lg shadow-sm">
+          <div className="px-6 py-4 border-b border-border">
+            <h3 className="text-base font-semibold text-foreground">
               Histórico de Status
             </h3>
           </div>
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-border">
             {historico.map((h) => (
               <div key={h.id} className="px-6 py-4">
                 <div className="flex items-center gap-3">
                   {h.statusAnterior && (
                     <>
                       <StatusBadge status={h.statusAnterior} />
-                      <span className="text-gray-400">→</span>
+                      <span className="text-muted-foreground">→</span>
                     </>
                   )}
                   <StatusBadge status={h.statusNovo} />
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Por {h.usuarioNome} em{" "}
                   {new Date(h.dataMudanca).toLocaleString("pt-BR")}
                   {h.motivo && ` — ${h.motivo}`}
@@ -146,7 +145,7 @@ export default async function ContentorDetailPage({ params }: PageProps) {
               </div>
             ))}
             {historico.length === 0 && (
-              <div className="px-6 py-8 text-center text-gray-500">
+              <div className="px-6 py-8 text-center text-muted-foreground">
                 Sem histórico de status.
               </div>
             )}
@@ -154,20 +153,20 @@ export default async function ContentorDetailPage({ params }: PageProps) {
         </div>
 
         {/* Últimos checklists */}
-        <div className="bg-white rounded-lg shadow-sm">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-base font-semibold text-gray-900">
+        <div className="bg-card border border-border rounded-lg shadow-sm">
+          <div className="px-6 py-4 border-b border-border">
+            <h3 className="text-base font-semibold text-foreground">
               Checklists de Recebimento
             </h3>
           </div>
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-border">
             {checklists.map((c) => (
               <div key={c.id} className="px-6 py-4 flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-800">
+                  <p className="text-sm font-medium text-foreground">
                     {c.operadorNome}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     {new Date(c.dataInspecao).toLocaleString("pt-BR")}
                   </p>
                 </div>
@@ -175,7 +174,7 @@ export default async function ContentorDetailPage({ params }: PageProps) {
               </div>
             ))}
             {checklists.length === 0 && (
-              <div className="px-6 py-8 text-center text-gray-500">
+              <div className="px-6 py-8 text-center text-muted-foreground">
                 Sem checklists registrados.
               </div>
             )}
@@ -197,13 +196,13 @@ function Field({
 }) {
   return (
     <div>
-      <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">
+      <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
         {label}
       </p>
       {children ? (
         <div className="mt-1">{children}</div>
       ) : (
-        <p className="text-sm text-gray-800 mt-1">{value}</p>
+        <p className="text-sm text-foreground mt-1">{value}</p>
       )}
     </div>
   );

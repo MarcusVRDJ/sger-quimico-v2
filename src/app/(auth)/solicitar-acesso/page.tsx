@@ -41,7 +41,7 @@ export default function SolicitarAcessoPage() {
 
   if (sucesso) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <div className="w-full max-w-md text-center space-y-4">
           <div className="bg-green-50 border border-green-300 text-green-700 rounded-lg px-6 py-8">
             <h2 className="text-xl font-semibold mb-2">Solicitação enviada!</h2>
@@ -50,7 +50,7 @@ export default function SolicitarAcessoPage() {
               email quando sua conta for aprovada.
             </p>
           </div>
-          <Link href="/login" className="text-blue-600 hover:underline text-sm">
+          <Link href="/login" className="text-primary hover:underline text-sm">
             Voltar para o login
           </Link>
         </div>
@@ -59,18 +59,18 @@ export default function SolicitarAcessoPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">SGE Químico v2</h1>
-          <p className="mt-2 text-gray-600">Solicitar acesso ao sistema</p>
+          <h1 className="text-3xl font-bold text-foreground">SGER Químico</h1>
+          <p className="mt-2 text-muted-foreground">Solicitar acesso ao sistema</p>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="bg-white shadow rounded-lg p-8 space-y-6"
+          className="bg-card border border-border shadow rounded-lg p-8 space-y-6"
         >
-          <h2 className="text-xl font-semibold text-gray-800">
+          <h2 className="text-xl font-semibold text-foreground">
             Criar conta
           </h2>
 
@@ -83,7 +83,7 @@ export default function SolicitarAcessoPage() {
           <div className="space-y-1">
             <label
               htmlFor="nome"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-foreground"
             >
               Nome completo
             </label>
@@ -93,7 +93,7 @@ export default function SolicitarAcessoPage() {
               required
               value={nome}
               onChange={(e) => setNome(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-border bg-background rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="Seu nome"
             />
           </div>
@@ -101,7 +101,7 @@ export default function SolicitarAcessoPage() {
           <div className="space-y-1">
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-foreground"
             >
               Email
             </label>
@@ -111,7 +111,7 @@ export default function SolicitarAcessoPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-border bg-background rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="seu@email.com"
             />
           </div>
@@ -119,7 +119,7 @@ export default function SolicitarAcessoPage() {
           <div className="space-y-1">
             <label
               htmlFor="senha"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-foreground"
             >
               Senha
             </label>
@@ -130,7 +130,7 @@ export default function SolicitarAcessoPage() {
               minLength={6}
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-border bg-background rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="Mínimo 6 caracteres"
             />
           </div>
@@ -138,7 +138,7 @@ export default function SolicitarAcessoPage() {
           <div className="space-y-1">
             <label
               htmlFor="perfil"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-foreground"
             >
               Perfil desejado
             </label>
@@ -148,7 +148,7 @@ export default function SolicitarAcessoPage() {
               onChange={(e) =>
                 setPerfil(e.target.value as "ANALISTA" | "OPERADOR")
               }
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-border bg-background rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="OPERADOR">Operador</option>
               <option value="ANALISTA">Analista</option>
@@ -158,14 +158,14 @@ export default function SolicitarAcessoPage() {
           <button
             type="submit"
             disabled={carregando}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium py-2.5 rounded-md transition-colors"
+            className="w-full bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-medium py-2.5 rounded-md transition-colors"
           >
             {carregando ? "Enviando..." : "Solicitar acesso"}
           </button>
 
-          <p className="text-center text-sm text-gray-600">
+          <p className="text-center text-sm text-muted-foreground">
             Já tem acesso?{" "}
-            <Link href="/login" className="text-blue-600 hover:underline font-medium">
+            <Link href="/login" className="text-primary hover:underline font-medium">
               Fazer login
             </Link>
           </p>

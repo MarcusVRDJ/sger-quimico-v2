@@ -11,13 +11,13 @@ export function ChecklistRecebimentoCard({
   const respostas = checklist.respostas as Record<string, boolean>;
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
+    <div className="bg-card rounded-lg border border-border p-4 space-y-3">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-800">
+          <p className="text-sm font-medium text-foreground">
             {checklist.operadorNome}
           </p>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted-foreground">
             {new Date(checklist.dataInspecao).toLocaleString("pt-BR")}
           </p>
         </div>
@@ -33,7 +33,7 @@ export function ChecklistRecebimentoCard({
       </div>
 
       {checklist.observacoes && (
-        <p className="text-xs text-gray-600 italic">{checklist.observacoes}</p>
+        <p className="text-xs text-muted-foreground italic">{checklist.observacoes}</p>
       )}
     </div>
   );
@@ -51,7 +51,7 @@ function RespostaItem({
       <span
         className={`w-2 h-2 rounded-full ${valor ? "bg-red-500" : "bg-green-500"}`}
       />
-      <span className="text-gray-600">{label}:</span>
+      <span className="text-muted-foreground">{label}:</span>
       <span className={valor ? "text-red-600 font-medium" : "text-green-600"}>
         {valor ? "Sim" : "Não"}
       </span>
