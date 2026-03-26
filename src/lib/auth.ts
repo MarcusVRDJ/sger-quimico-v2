@@ -186,3 +186,7 @@ export async function revokeSession(token: string): Promise<void> {
   const tokenHash = hashToken(token);
   await db.delete(sessions).where(eq(sessions.tokenHash, tokenHash));
 }
+
+export async function revokeAllSessionsForUser(userId: string): Promise<void> {
+  await db.delete(sessions).where(eq(sessions.userId, userId));
+}

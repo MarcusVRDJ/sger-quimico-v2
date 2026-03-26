@@ -10,6 +10,8 @@ export default function UsuariosPage() {
   const [pendentes, setPendentes] = useState<UsuarioComAcoes[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [abaAtiva, setAbaAtiva] = useState<"ativos" | "pendentes">("ativos");
+  const [mensagem, setMensagem] = useState("");
+  const [erro, setErro] = useState("");
 
   async function buscar() {
     const [resAtivos, resPendentes] = await Promise.all([
@@ -26,16 +28,45 @@ export default function UsuariosPage() {
   }, []);
 
   async function aprovar(id: string) {
-    await fetch(`/api/usuarios/${id}`, {
+    setErro("");
+    setMensagem("");
+
+    const res = await fetch(`/api/usuarios/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ativo: true }),
     });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => null) as { error?: string } | null;
+      setErro(data?.error ?? "Não foi possível aprovar a solicitação.");
+      return;
+    }
+
+    setMensagem("Solicitação aprovada. A senha temporária foi enviada por email.");
     void buscar();
   }
 
   async function reprovar(id: string) {
-    await fetch(`/api/usuarios/${id}`, { method: "DELETE" });
+    setErro("");
+    setMensagem("");
+
+    const motivo = window.prompt("Informe o motivo da reprovação:");
+    if (!motivo) return;
+
+    const res = await fetch(`/api/usuarios/${id}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ motivo }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => null) as { error?: string } | null;
+      setErro(data?.error ?? "Não foi possível reprovar a solicitação.");
+      return;
+    }
+
+    setMensagem("Solicitação reprovada e email enviado ao solicitante.");
     void buscar();
   }
 
@@ -55,6 +86,18 @@ export default function UsuariosPage() {
       </div>
 
       <main className="p-6">
+        {mensagem && (
+          <div className="mb-4 rounded-md border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-700">
+            {mensagem}
+          </div>
+        )}
+
+        {erro && (
+          <div className="mb-4 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {erro}
+          </div>
+        )}
+
         {/* Abas */}
         <div className="flex gap-2 mb-6">
           <button

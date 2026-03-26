@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { usuarios } from "@/drizzle/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 import {
   sendAccountPendingEmail,
-  sendNewAccountNotificationToAdmin,
+  sendNewAccountNotificationToAdmins,
 } from "@/lib/email";
 import { z } from "zod";
+import { generateTemporaryPassword, maskEmail } from "@/lib/password";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const session = await requireAuth(request);
@@ -36,7 +37,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 const criarSchema = z.object({
   nome: z.string().min(2),
   email: z.string().email(),
-  senha: z.string().min(6),
   perfil: z.enum(["ANALISTA", "OPERADOR"]).default("OPERADOR"),
 });
 
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const { nome, email, senha, perfil } = parsed.data;
+  const { nome, email, perfil } = parsed.data;
 
   // Verifica email duplicado
   const [existente] = await db
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const senhaHash = await bcrypt.hash(senha, 10);
+  const senhaHash = await bcrypt.hash(generateTemporaryPassword(), 10);
 
   const [usuario] = await db
     .insert(usuarios)
@@ -78,6 +78,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       senhaHash,
       perfil,
       ativo: false,
+      exigeTrocaSenha: false,
     })
     .returning({
       id: usuarios.id,
@@ -86,15 +87,34 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       perfil: usuarios.perfil,
     });
 
+  const admins = await db
+    .select({ email: usuarios.email })
+    .from(usuarios)
+    .where(and(eq(usuarios.perfil, "ADMIN"), eq(usuarios.ativo, true)));
+
+  const adminEmails = admins
+    .map((admin) => admin.email.toLowerCase())
+    .filter(Boolean);
+
   // Envia emails (não bloqueia a resposta em caso de falha)
   try {
     await Promise.all([
       sendAccountPendingEmail(email, nome),
-      sendNewAccountNotificationToAdmin(nome, email),
+      sendNewAccountNotificationToAdmins(adminEmails, nome, email),
     ]);
-  } catch {
-    // Log silencioso — email não crítico
+  } catch (error) {
+    console.error("Falha ao enviar emails da solicitacao de acesso", {
+      email,
+      error,
+    });
   }
 
-  return NextResponse.json(usuario, { status: 201 });
+  return NextResponse.json(
+    {
+      ...usuario,
+      mensagem: "Solicitação criada e emails enviados.",
+      emailDestinoMascarado: maskEmail(email),
+    },
+    { status: 201 }
+  );
 }

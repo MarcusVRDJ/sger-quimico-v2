@@ -15,6 +15,13 @@
       "when": 1774308000000,
       "tag": "0001_numero_serie_identificador",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774501200000,
+      "tag": "0002_auth_workflow_upgrade",
+      "breakpoints": true
     }
   ]
 }

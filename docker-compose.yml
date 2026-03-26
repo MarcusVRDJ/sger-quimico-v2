@@ -22,6 +22,7 @@ services:
     container_name: sge-quimico-migrate
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-sge}:${POSTGRES_PASSWORD:-sge}@db:5432/${POSTGRES_DB:-sge_quimico_v2}
+      RUN_SEED: ${RUN_SEED:-true}
     depends_on:
       db:
         condition: service_healthy
@@ -38,6 +39,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-sge}:${POSTGRES_PASSWORD:-sge}@db:5432/${POSTGRES_DB:-sge_quimico_v2}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
       AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-false}
+      NEXT_SERVER_ACTIONS_ALLOWED_ORIGINS: ${NEXT_SERVER_ACTIONS_ALLOWED_ORIGINS:-localhost:3000}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-noreply@sge.com}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@sge.com}

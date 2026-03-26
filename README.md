@@ -240,7 +240,9 @@ middleware.ts
 | `RESEND_FROM_EMAIL` | Email remetente |
 | `ADMIN_EMAIL` | Email do administrador (notificações) |
 | `NEXT_PUBLIC_APP_URL` | URL pública da aplicação |
+| `NEXT_SERVER_ACTIONS_ALLOWED_ORIGINS` | Lista separada por vírgula de origens permitidas para Server Actions (formato `host:porta`, sem protocolo) |
 | `AUTH_COOKIE_SECURE` | Força cookie `Secure` (`true`/`false`). Em teste mobile via IP local/HTTP, usar `false` |
+| `RUN_SEED` | Controla seed automático no container `migrate` (`true`/`false`) |
 
 ---
 
@@ -252,7 +254,34 @@ middleware.ts
 2. Adicione um serviço PostgreSQL
 3. Deploy do repositório GitHub
 4. Configure as variáveis de ambiente
-5. Execute `npm run db:migrate && npm run db:seed` via Railway CLI ou painel
+5. Execute `npm run db:migrate` via Railway CLI ou painel
+6. Execute `npm run db:seed` somente quando necessário (bootstrap inicial)
+
+#### Checklist de Deploy (Railway)
+
+Pré-deploy:
+
+- [ ] Serviço PostgreSQL criado e conectado ao projeto.
+- [ ] `DATABASE_URL` disponível para o serviço da aplicação.
+- [ ] `JWT_SECRET` configurado com valor seguro (mínimo 32 caracteres).
+- [ ] `NEXT_PUBLIC_APP_URL` apontando para o domínio público do Railway.
+- [ ] `NEXT_SERVER_ACTIONS_ALLOWED_ORIGINS` configurado com `host:porta` do domínio público (sem protocolo).
+- [ ] `AUTH_COOKIE_SECURE=true` em produção.
+- [ ] `RUN_SEED=false` em produção (habilitar seed apenas para bootstrap inicial).
+- [ ] `RESEND_API_KEY`, `RESEND_FROM_EMAIL` e `ADMIN_EMAIL` configurados (se fluxo de email estiver ativo).
+
+Deploy inicial:
+
+- [ ] Primeiro deploy concluído com sucesso no Railway.
+- [ ] Migração executada: `npm run db:migrate`.
+- [ ] Seed executado somente se necessário: `npm run db:seed`.
+
+Validação pós-deploy:
+
+- [ ] `GET /api/health` responde `200`.
+- [ ] Login funcional com usuário válido.
+- [ ] Endpoint protegido sem token retorna `401` (ex.: `/api/contentores`).
+- [ ] Navegação desktop/mobile sem loop de redirecionamento.
 
 ### Vercel
 
@@ -263,6 +292,7 @@ middleware.ts
    ```bash
    npx drizzle-kit migrate
    ```
+5. Configure `NEXT_SERVER_ACTIONS_ALLOWED_ORIGINS` com o domínio público da aplicação (ex.: `sge.empresa.com`)
 
 ### Health Check (Deploy)
 

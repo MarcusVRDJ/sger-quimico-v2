@@ -71,6 +71,28 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
+  if (usuario.exigeTrocaSenha) {
+    const now = new Date();
+
+    if (usuario.senhaTemporariaExpiraEm && usuario.senhaTemporariaExpiraEm < now) {
+      return NextResponse.json(
+        {
+          error: "Sua senha temporária expirou. Solicite recuperação de senha.",
+          code: "SENHA_TEMPORARIA_EXPIRADA",
+        },
+        { status: 403 }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        error: "Primeiro acesso detectado. Troque sua senha para continuar.",
+        code: "TROCA_SENHA_OBRIGATORIA",
+      },
+      { status: 403 }
+    );
+  }
+
   const token = await signJWT({
     sub: usuario.id,
     email: usuario.email,

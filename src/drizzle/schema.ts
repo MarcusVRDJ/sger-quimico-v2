@@ -64,6 +64,23 @@ export const usuarios = pgTable("usuarios", {
   senhaHash: text("senha_hash").notNull(),
   perfil: perfilEnum("perfil").notNull().default("OPERADOR"),
   ativo: boolean("ativo").notNull().default(false),
+  exigeTrocaSenha: boolean("exige_troca_senha").notNull().default(false),
+  senhaTemporariaExpiraEm: timestamp("senha_temporaria_expira_em"),
+  aprovadoPorId: uuid("aprovado_por_id"),
+  aprovadoEm: timestamp("aprovado_em"),
+  motivoReprovacao: text("motivo_reprovacao"),
+  reprovadoEm: timestamp("reprovado_em"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const tokensRecuperacaoSenha = pgTable("tokens_recuperacao_senha", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => usuarios.id, { onDelete: "cascade" }),
+  tokenHash: text("token_hash").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -204,6 +221,7 @@ export const notificacoes = pgTable("notificacoes", {
 export type Usuario = typeof usuarios.$inferSelect;
 export type NovoUsuario = typeof usuarios.$inferInsert;
 export type Session = typeof sessions.$inferSelect;
+export type TokenRecuperacaoSenha = typeof tokensRecuperacaoSenha.$inferSelect;
 export type Contentor = typeof contentores.$inferSelect;
 export type NovoContentor = typeof contentores.$inferInsert;
 export type ChecklistRecebimento = typeof checklistsRecebimento.$inferSelect;

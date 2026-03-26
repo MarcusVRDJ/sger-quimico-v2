@@ -5,7 +5,12 @@ import { isMobileRequest, isDeviceAllowedForPerfil } from "@/lib/device-access";
 const PUBLIC_PATHS = [
   "/login",
   "/solicitar-acesso",
+  "/recuperar-senha",
+  "/redefinir-senha",
   "/api/auth/login",
+  "/api/auth/primeiro-acesso",
+  "/api/auth/forgot-password",
+  "/api/auth/reset-password",
   "/api/health",
 ];
 
@@ -39,7 +44,12 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     pathname.startsWith("/favicon")
   ) {
     // Redirect authenticated users away from auth pages
-    if (pathname === "/login" || pathname === "/solicitar-acesso") {
+    if (
+      pathname === "/login" ||
+      pathname === "/solicitar-acesso" ||
+      pathname === "/recuperar-senha" ||
+      pathname === "/redefinir-senha"
+    ) {
       const session = await getSession(request);
       if (session) {
         if (!isDeviceAllowedForPerfil(session.perfil, mobileRequest)) {

@@ -1,5 +1,5 @@
-# Migration container that runs migrations and seeds the database
-FROM node:20-alpine
+# Migration container that runs migrations and can optionally seed the database
+FROM node:22-alpine
 
 RUN apk add --no-cache libc6-compat
 
@@ -10,5 +10,5 @@ RUN npm ci
 
 COPY . .
 
-# Run migrations and seed
-CMD ["sh", "-c", "npm run db:migrate && npm run db:seed"]
+# Run migrations and optionally seed (RUN_SEED=false to skip)
+CMD ["sh", "-c", "npm run db:migrate && if [ \"${RUN_SEED:-true}\" = \"true\" ]; then npm run db:seed; else echo 'Skipping seed (RUN_SEED=false)'; fi"]

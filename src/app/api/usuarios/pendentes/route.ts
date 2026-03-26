@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { usuarios } from "@/drizzle/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { requireRole } from "@/lib/auth";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -15,10 +15,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       email: usuarios.email,
       perfil: usuarios.perfil,
       ativo: usuarios.ativo,
+      motivoReprovacao: usuarios.motivoReprovacao,
+      reprovadoEm: usuarios.reprovadoEm,
       createdAt: usuarios.createdAt,
     })
     .from(usuarios)
-    .where(eq(usuarios.ativo, false));
+    .where(and(eq(usuarios.ativo, false), isNull(usuarios.reprovadoEm)));
 
   return NextResponse.json(rows);
 }

@@ -6,10 +6,10 @@ import Link from "next/link";
 export default function SolicitarAcessoPage() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
-  const [senha, setSenha] = useState("");
   const [perfil, setPerfil] = useState<"ANALISTA" | "OPERADOR">("OPERADOR");
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState(false);
+  const [emailConfirmacao, setEmailConfirmacao] = useState("");
   const [carregando, setCarregando] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -21,16 +21,20 @@ export default function SolicitarAcessoPage() {
       const res = await fetch("/api/usuarios", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome, email, senha, perfil }),
+        body: JSON.stringify({ nome, email, perfil }),
       });
 
-      const data = await res.json() as { error?: string };
+      const data = await res.json() as {
+        error?: string;
+        emailDestinoMascarado?: string;
+      };
 
       if (!res.ok) {
         setErro(data.error ?? "Erro ao solicitar acesso");
         return;
       }
 
+      setEmailConfirmacao(data.emailDestinoMascarado ?? "");
       setSucesso(true);
     } catch {
       setErro("Erro de conexão. Tente novamente.");
@@ -46,9 +50,14 @@ export default function SolicitarAcessoPage() {
           <div className="bg-green-50 border border-green-300 text-green-700 rounded-lg px-6 py-8">
             <h2 className="text-xl font-semibold mb-2">Solicitação enviada!</h2>
             <p className="text-sm">
-              Sua solicitação de acesso foi recebida. Você será notificado por
-              email quando sua conta for aprovada.
+              Sua solicitação foi criada com sucesso e os administradores já
+              foram notificados.
             </p>
+            {emailConfirmacao && (
+              <p className="text-sm mt-2">
+                Enviamos uma confirmação para <strong>{emailConfirmacao}</strong>.
+              </p>
+            )}
           </div>
           <Link href="/login" className="text-primary hover:underline text-sm">
             Voltar para o login
@@ -113,25 +122,6 @@ export default function SolicitarAcessoPage() {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full border border-border bg-background rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="seu@email.com"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label
-              htmlFor="senha"
-              className="block text-sm font-medium text-foreground"
-            >
-              Senha
-            </label>
-            <input
-              id="senha"
-              type="password"
-              required
-              minLength={6}
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              className="w-full border border-border bg-background rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="Mínimo 6 caracteres"
             />
           </div>
 
