@@ -6,6 +6,7 @@ const PUBLIC_PATHS = [
   "/login",
   "/solicitar-acesso",
   "/api/auth/login",
+  "/api/health",
 ];
 
 const ADMIN_ONLY_PATHS = ["/usuarios"];

@@ -263,3 +263,19 @@ middleware.ts
    ```bash
    npx drizzle-kit migrate
    ```
+
+### Health Check (Deploy)
+
+- Endpoint: `GET /api/health`
+- Não exige autenticação
+- Retorna `200` quando a aplicação está no ar (liveness)
+
+Resposta esperada:
+
+```json
+{
+    "status": "ok",
+    "service": "sge-quimico-v2",
+    "timestamp": "2026-03-25T12:34:56.000Z"
+}
+```
