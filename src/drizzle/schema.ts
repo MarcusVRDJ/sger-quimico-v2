@@ -134,6 +134,8 @@ export const contentores = pgTable("contentores", {
 
 export const checklistsRecebimento = pgTable("checklists_recebimento", {
   id: uuid("id").defaultRandom().primaryKey(),
+  templateId: uuid("template_id"),
+  templateRevisaoId: uuid("template_revisao_id"),
   contentorId: uuid("contentor_id")
     .notNull()
     .references(() => contentores.id),
@@ -152,6 +154,8 @@ export const checklistsRecebimento = pgTable("checklists_recebimento", {
 
 export const checklistsExpedicao = pgTable("checklists_expedicao", {
   id: uuid("id").defaultRandom().primaryKey(),
+  templateId: uuid("template_id"),
+  templateRevisaoId: uuid("template_revisao_id"),
   contentorId: uuid("contentor_id")
     .notNull()
     .references(() => contentores.id),

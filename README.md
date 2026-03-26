@@ -96,7 +96,23 @@ Acesse: http://localhost:3000
 
 ### 4c. Docker Compose (Desenvolvimento com Live Reload)
 
-Use o arquivo de override de desenvolvimento para rodar o Next.js em modo dev com hot reload:
+O repositório inclui `docker-compose.override.yml`, então `docker compose up` já sobe o `app` em modo desenvolvimento com hot reload.
+
+Primeira subida (quando precisar reconstruir imagens):
+
+```bash
+docker compose up --build
+```
+
+No dia a dia (sem rebuild a cada alteração):
+
+```bash
+docker compose up
+```
+
+As alterações no código são refletidas automaticamente sem rebuild de imagem.
+
+Se preferir usar o arquivo de desenvolvimento explicitamente, este comando continua válido:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build

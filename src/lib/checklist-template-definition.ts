@@ -49,8 +49,11 @@ export const checklistTemplateDefinitionSchema = z.object({
   sections: z.array(checklistSectionSchema).min(1),
 });
 
+export type ChecklistTemplateDefinition = z.infer<
+  typeof checklistTemplateDefinitionSchema
+>;
+
 export const createTemplateSchema = z.object({
-  nome: z.string().min(3),
   descricao: z.string().optional(),
   tipoChecklist: z.enum(["RECEBIMENTO", "EXPEDICAO"]),
   definicao: checklistTemplateDefinitionSchema,

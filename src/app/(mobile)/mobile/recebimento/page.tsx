@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QrCode } from "lucide-react";
 import { StatusBadge } from "@/components/contentores/StatusBadge";
 import { QrScannerModal } from "@/components/mobile/QrScannerModal";
 import { ChecklistSuccessModal } from "@/components/mobile/ChecklistSuccessModal";
 import type { StatusContentor } from "@/drizzle/schema";
+import type { ChecklistTemplateDefinition } from "@/lib/checklist-template-definition";
 import { parseQrContentor } from "@/lib/qr-contentor";
 
 const ETAPAS = [
@@ -33,6 +34,31 @@ interface Respostas {
   dataUltimaInspecao: string;
 }
 
+interface TemplateAtivoResponse {
+  templateId: string;
+  templateNome: string;
+  tipoChecklist: "RECEBIMENTO" | "EXPEDICAO";
+  revisaoId: string;
+  versao: number;
+  definicao: ChecklistTemplateDefinition;
+  aprovadoEm: string | null;
+}
+
+function isRespostaKey(key: string): key is keyof Respostas {
+  const allowed: Array<keyof Respostas> = [
+    "avarias",
+    "lacreRoto",
+    "testesVencidos",
+    "produtoAnterior",
+    "residuos",
+    "dataValidade",
+    "dataUltimaInspecao",
+    "observacoes",
+  ];
+
+  return allowed.includes(key as keyof Respostas);
+}
+
 export default function RecebimentoPage() {
   const router = useRouter();
   const [etapa, setEtapa] = useState(0);
@@ -41,6 +67,10 @@ export default function RecebimentoPage() {
   const [modalSucessoAberto, setModalSucessoAberto] = useState(false);
   const [infoNumeroSerie, setInfoNumeroSerie] = useState("");
   const [erro, setErro] = useState("");
+  const [carregandoTemplate, setCarregandoTemplate] = useState(true);
+  const [templateAtivo, setTemplateAtivo] = useState<TemplateAtivoResponse | null>(
+    null
+  );
   const [respostas, setRespostas] = useState<Respostas>({
     numeroSerie: "",
     tipoContentor: "",
@@ -56,6 +86,77 @@ export default function RecebimentoPage() {
     dataValidade: "",
     dataUltimaInspecao: "",
   });
+
+  useEffect(() => {
+    async function carregarTemplateAtivo() {
+      try {
+        setCarregandoTemplate(true);
+        const res = await fetch(
+          "/api/checklist-templates/ativo?tipoChecklist=RECEBIMENTO"
+        );
+
+        if (!res.ok) {
+          const data = (await res.json().catch(() => null)) as
+            | { error?: string }
+            | null;
+
+          setErro(
+            data?.error ??
+              "Nenhum template ativo encontrado para checklist de recebimento"
+          );
+          setTemplateAtivo(null);
+          return;
+        }
+
+        const data = (await res.json()) as TemplateAtivoResponse;
+        setTemplateAtivo(data);
+      } catch {
+        setErro("Não foi possível carregar o template de checklist.");
+        setTemplateAtivo(null);
+      } finally {
+        setCarregandoTemplate(false);
+      }
+    }
+
+    void carregarTemplateAtivo();
+  }, []);
+
+  const secoesTemplate = useMemo(() => {
+    if (!templateAtivo) return [];
+
+    return templateAtivo.definicao.sections.filter((section) =>
+      section.fields.some((field) => isRespostaKey(field.key))
+    );
+  }, [templateAtivo]);
+
+  const etapas = useMemo(() => {
+    if (secoesTemplate.length === 0) return ETAPAS;
+    return [
+      "Identificação",
+      ...secoesTemplate.map((section) => section.title),
+      "Revisão",
+    ];
+  }, [secoesTemplate]);
+
+  const ultimaEtapa = etapas.length - 1;
+  const secaoAtual =
+    etapa > 0 && etapa < ultimaEtapa ? secoesTemplate[etapa - 1] : null;
+
+  function canAdvance(): boolean {
+    if (etapa === 0) {
+      return Boolean(respostas.numeroSerie && respostas.tipoContentor);
+    }
+
+    if (!secaoAtual) return true;
+
+    return secaoAtual.fields.every((field) => {
+      if (!field.required || !isRespostaKey(field.key)) return true;
+
+      const value = respostas[field.key];
+      if (typeof value === "boolean") return true;
+      return value.trim().length > 0;
+    });
+  }
 
   function set<K extends keyof Respostas>(key: K, value: Respostas[K]) {
     setRespostas((prev) => ({ ...prev, [key]: value }));
@@ -182,7 +283,7 @@ export default function RecebimentoPage() {
         </h1>
         {/* Barra de progresso */}
         <div className="flex gap-1 mb-3">
-          {ETAPAS.map((_, i) => (
+          {etapas.map((_, i) => (
             <div
               key={i}
               className={`h-1.5 flex-1 rounded-full transition-colors ${
@@ -192,11 +293,17 @@ export default function RecebimentoPage() {
           ))}
         </div>
         <p className="text-sm text-muted-foreground">
-          Etapa {etapa + 1} de {ETAPAS.length}: <strong>{ETAPAS[etapa]}</strong>
+          Etapa {etapa + 1} de {etapas.length}: <strong>{etapas[etapa]}</strong>
         </p>
       </div>
 
       <div className="px-4 py-6 space-y-6">
+        {carregandoTemplate && (
+          <div className="bg-blue-50 border border-blue-200 text-blue-700 rounded-lg px-4 py-3 text-sm">
+            Carregando template de checklist...
+          </div>
+        )}
+
         {erro && (
           <div className="bg-red-50 border border-red-300 text-red-700 rounded-lg px-4 py-3 text-sm">
             {erro}
@@ -298,79 +405,71 @@ export default function RecebimentoPage() {
           </div>
         )}
 
-        {/* Etapa 1: Inspeção Externa */}
-        {etapa === 1 && (
+        {/* Etapas dinâmicas de inspeção */}
+        {secaoAtual && (
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Verifique o estado externo do contentor.
-            </p>
-            <CheckItem
-              label="Há avarias físicas visíveis?"
-              checked={respostas.avarias}
-              onChange={(v) => set("avarias", v)}
-            />
-            <CheckItem
-              label="Lacre roto ou ausente?"
-              checked={respostas.lacreRoto}
-              onChange={(v) => set("lacreRoto", v)}
-            />
-          </div>
-        )}
+            {secaoAtual.description && (
+              <p className="text-sm text-muted-foreground">{secaoAtual.description}</p>
+            )}
+            {secaoAtual.fields.map((field) => {
+              if (!isRespostaKey(field.key)) return null;
 
-        {/* Etapa 2: Inspeção Interna */}
-        {etapa === 2 && (
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Verifique o estado interno do contentor.
-            </p>
-            <CheckItem
-              label="Presença de produto anterior?"
-              checked={respostas.produtoAnterior}
-              onChange={(v) => set("produtoAnterior", v)}
-            />
-            <CheckItem
-              label="Presença de resíduos?"
-              checked={respostas.residuos}
-              onChange={(v) => set("residuos", v)}
-            />
-          </div>
-        )}
+              const key = field.key;
+              const value = respostas[key];
 
-        {/* Etapa 3: Validades */}
-        {etapa === 3 && (
-          <div className="space-y-5">
-            <CheckItem
-              label="Testes técnicos vencidos?"
-              checked={respostas.testesVencidos}
-              onChange={(v) => set("testesVencidos", v)}
-            />
-            <div>
-              <label className="block text-sm font-semibold text-foreground mb-2">
-                Data de Validade do Contentor
-              </label>
-              <input
-                type="date"
-                value={respostas.dataValidade}
-                onChange={(e) => set("dataValidade", e.target.value)}
-                className="w-full border border-border bg-background rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-foreground mb-2">
-                Data Última Inspeção
-              </label>
-              <input
-                type="date"
-                value={respostas.dataUltimaInspecao}
-                onChange={(e) => set("dataUltimaInspecao", e.target.value)}
-                className="w-full border border-border bg-background rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
+              if (field.type === "boolean") {
+                return (
+                  <CheckItem
+                    key={field.key}
+                    label={field.label}
+                    checked={Boolean(value)}
+                    onChange={(v) => set(key, v)}
+                  />
+                );
+              }
+
+              if (field.type === "select") {
+                return (
+                  <div key={field.key}>
+                    <label className="block text-sm font-semibold text-foreground mb-2">
+                      {field.label}
+                    </label>
+                    <select
+                      value={String(value)}
+                      onChange={(e) => set(key, e.target.value)}
+                      className="w-full border border-border bg-background rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                      <option value="">Selecione...</option>
+                      {(field.options ?? []).map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              }
+
+              return (
+                <div key={field.key}>
+                  <label className="block text-sm font-semibold text-foreground mb-2">
+                    {field.label}
+                  </label>
+                  <input
+                    type={field.type === "date" ? "date" : field.type === "number" ? "number" : "text"}
+                    value={String(value)}
+                    onChange={(e) => set(key, e.target.value)}
+                    placeholder={field.placeholder}
+                    className="w-full border border-border bg-background rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+              );
+            })}
           </div>
         )}
 
         {/* Etapa 4: Revisão */}
-        {etapa === 4 && (
+        {etapa === ultimaEtapa && (
           <div className="space-y-5">
             <div className="bg-card rounded-xl border border-border p-4 space-y-3">
               <h3 className="font-semibold text-foreground">Resumo</h3>
@@ -403,6 +502,11 @@ export default function RecebimentoPage() {
                 <p className="text-xs text-muted-foreground mb-1">Status Resultante:</p>
                 <StatusBadge status={statusPreview()} />
               </div>
+              {templateAtivo && (
+                <p className="text-xs text-muted-foreground pt-1">
+                  Template: {templateAtivo.templateNome} (v{templateAtivo.versao})
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-semibold text-foreground mb-2">
@@ -430,13 +534,10 @@ export default function RecebimentoPage() {
             Anterior
           </button>
         )}
-        {etapa < ETAPAS.length - 1 ? (
+        {etapa < etapas.length - 1 ? (
           <button
             onClick={() => setEtapa((e) => e + 1)}
-            disabled={
-              etapa === 0 &&
-              (!respostas.numeroSerie || !respostas.tipoContentor)
-            }
+            disabled={!canAdvance()}
             className="flex-1 bg-primary disabled:opacity-50 text-primary-foreground font-semibold py-3 rounded-xl text-base"
           >
             Próximo

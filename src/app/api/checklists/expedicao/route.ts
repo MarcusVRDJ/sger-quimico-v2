@@ -7,6 +7,10 @@ import {
 } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth";
+import {
+  getActiveChecklistTemplate,
+  templateHasRequiredFieldKeys,
+} from "@/lib/checklist-templates";
 import { z } from "zod";
 
 const checklistSchema = z.object({
@@ -28,6 +32,30 @@ const checklistSchema = z.object({
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const session = await requireAuth(request);
   if (session instanceof NextResponse) return session;
+
+  const activeTemplate = await getActiveChecklistTemplate("EXPEDICAO");
+  if (!activeTemplate) {
+    return NextResponse.json(
+      { error: "Nenhum template aprovado de expedição está disponível" },
+      { status: 409 }
+    );
+  }
+
+  const templateCompativel = templateHasRequiredFieldKeys(activeTemplate.definicao, [
+    "tampaOk",
+    "vedacaoOk",
+    "lacresIntactos",
+  ]);
+
+  if (!templateCompativel) {
+    return NextResponse.json(
+      {
+        error:
+          "O template ativo de expedição não contém os campos mínimos exigidos",
+      },
+      { status: 422 }
+    );
+  }
 
   const body = await request.json() as unknown;
   const parsed = checklistSchema.safeParse(body);
@@ -81,6 +109,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const [checklist] = await db
     .insert(checklistsExpedicao)
     .values({
+      templateId: activeTemplate.templateId,
+      templateRevisaoId: activeTemplate.revisaoId,
       contentorId: contentor.id,
       operadorId: session.sub,
       operadorNome: session.nome,
@@ -117,7 +147,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     usuarioEmail: session.email,
     motivo: "Checklist de expedição EXPED-001",
     origem: "CHECKLIST_EXPEDICAO",
-    metadata: { checklistId: checklist.id, tipoDestino, clienteNome },
+    metadata: {
+      checklistId: checklist.id,
+      tipoDestino,
+      clienteNome,
+      templateId: activeTemplate.templateId,
+      templateRevisaoId: activeTemplate.revisaoId,
+      templateVersao: activeTemplate.versao,
+    },
   });
 
   return NextResponse.json(checklist, { status: 201 });

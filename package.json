@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "npx tsx src/drizzle/migrate.ts",
     "db:studio": "drizzle-kit studio",
     "db:seed": "npx tsx src/drizzle/seed.ts"
   },

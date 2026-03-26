@@ -39,6 +39,7 @@ export async function GET(
       id: checklistTemplateRevisoes.id,
       versao: checklistTemplateRevisoes.versao,
       status: checklistTemplateRevisoes.status,
+      definicao: checklistTemplateRevisoes.definicao,
       resumoMudancas: checklistTemplateRevisoes.resumoMudancas,
       criadoPorId: checklistTemplateRevisoes.criadoPorId,
       aprovadoPorId: checklistTemplateRevisoes.aprovadoPorId,

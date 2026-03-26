@@ -29,6 +29,20 @@
       "when": 1774499603911,
       "tag": "0003_whole_the_renegades",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1774500741782,
+      "tag": "0004_fine_carmella_unuscione",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1774485711372,
+      "tag": "0005_schema_repair_checklist_templates",
+      "breakpoints": true
     }
   ]
 }

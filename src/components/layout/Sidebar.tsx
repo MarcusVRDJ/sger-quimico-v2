@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Package,
   Droplets,
+  ClipboardList,
   Users,
   LogOut,
 } from "lucide-react";
@@ -17,22 +18,31 @@ const navItems = [
     href: "/dashboard",
     label: "Dashboard",
     icon: LayoutDashboard,
+    perfisPermitidos: ["ADMIN", "ANALISTA"],
   },
   {
     href: "/contentores",
     label: "Contentores",
     icon: Package,
+    perfisPermitidos: ["ADMIN", "ANALISTA"],
   },
   {
     href: "/gestao-limpeza",
     label: "Gestão de Limpeza",
     icon: Droplets,
+    perfisPermitidos: ["ADMIN", "ANALISTA"],
   },
   {
     href: "/usuarios",
     label: "Usuários",
     icon: Users,
-    adminOnly: true,
+    perfisPermitidos: ["ADMIN"],
+  },
+  {
+    href: "/checklist-templates",
+    label: "Checklist Templates",
+    icon: ClipboardList,
+    perfisPermitidos: ["ADMIN"],
   },
 ];
 
@@ -59,7 +69,7 @@ export function Sidebar({ perfil }: SidebarProps) {
 
       <nav className="flex-1 p-4 space-y-1">
         {navItems.map((item) => {
-          if (item.adminOnly && perfil !== "ADMIN") return null;
+          if (!item.perfisPermitidos.includes(perfil)) return null;
           const Icon = item.icon;
           const active =
             pathname === item.href || pathname.startsWith(item.href + "/");
