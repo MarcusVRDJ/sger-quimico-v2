@@ -14,7 +14,19 @@ services:
       WATCHPACK_POLLING: "true"
       CHOKIDAR_USEPOLLING: "true"
       NEXT_TELEMETRY_DISABLED: "1"
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
     volumes:
       - .:/app
       - /app/node_modules
       - /app/.next
+    depends_on:
+      - mailhog
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: sge-quimico-mailhog
+    ports:
+      - "1025:1025" # SMTP server
+      - "8025:8025" # Web UI
+    restart: unless-stopped

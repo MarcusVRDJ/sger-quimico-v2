@@ -1,16 +1,43 @@
 import { Resend } from "resend";
-
-function getResend(): Resend {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) {
-    throw new Error("RESEND_API_KEY is not set");
-  }
-  return new Resend(key);
-}
+import nodemailer from "nodemailer";
 
 const FROM = process.env.RESEND_FROM_EMAIL ?? "noreply@sge.com";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "admin@sge.com";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
+let resendInstance: Resend | null = null;
+let nodemailerInstance: nodemailer.Transporter | null = null;
+
+async function sendEmail(options: { to: string | string[]; subject: string; html: string }) {
+  if (process.env.SMTP_HOST) {
+    if (!nodemailerInstance) {
+      nodemailerInstance = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: Number(process.env.SMTP_PORT) || 1025,
+        secure: false, // mailhog unencrypted local
+      });
+    }
+    await nodemailerInstance.sendMail({
+      from: FROM,
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+    });
+  } else {
+    const key = process.env.RESEND_API_KEY;
+    if (!key) throw new Error("RESEND_API_KEY or SMTP_HOST is not set");
+    
+    if (!resendInstance) {
+      resendInstance = new Resend(key);
+    }
+    await resendInstance.emails.send({
+      from: FROM,
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+    });
+  }
+}
 
 function parseAdminFallbackEmails(): string[] {
   return ADMIN_EMAIL.split(",")
@@ -22,8 +49,7 @@ export async function sendWelcomeEmail(
   to: string,
   nome: string
 ): Promise<void> {
-  await getResend().emails.send({
-    from: FROM,
+  await sendEmail({
     to,
     subject: "Bem-vindo ao SGE Químico v2",
     html: `
@@ -38,8 +64,7 @@ export async function sendAccountPendingEmail(
   to: string,
   nome: string
 ): Promise<void> {
-  await getResend().emails.send({
-    from: FROM,
+  await sendEmail({
     to,
     subject: "Solicitação de acesso recebida — SGE Químico v2",
     html: `
@@ -58,8 +83,7 @@ export async function sendNewAccountNotificationToAdmins(
 ): Promise<void> {
   const to = recipients.length > 0 ? recipients : parseAdminFallbackEmails();
 
-  await getResend().emails.send({
-    from: FROM,
+  await sendEmail({
     to,
     subject: "Nova solicitação de acesso — SGE Químico v2",
     html: `
@@ -77,8 +101,7 @@ export async function sendAccountApprovedWithTemporaryPasswordEmail(
   temporaryPassword: string,
   expiresAt: Date
 ): Promise<void> {
-  await getResend().emails.send({
-    from: FROM,
+  await sendEmail({
     to,
     subject: "Conta aprovada com senha temporária — SGE Químico v2",
     html: `
@@ -97,8 +120,7 @@ export async function sendAccountRejectedEmail(
   nome: string,
   motivo: string
 ): Promise<void> {
-  await getResend().emails.send({
-    from: FROM,
+  await sendEmail({
     to,
     subject: "Solicitação de acesso não aprovada — SGE Químico v2",
     html: `
@@ -118,8 +140,7 @@ export async function sendPasswordResetEmail(
 ): Promise<void> {
   const resetUrl = `${APP_URL}/redefinir-senha?token=${encodeURIComponent(token)}`;
 
-  await getResend().emails.send({
-    from: FROM,
+  await sendEmail({
     to,
     subject: "Recuperação de senha — SGE Químico v2",
     html: `

@@ -15,21 +15,42 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const session = await requireAuth(request);
   if (session instanceof NextResponse) return session;
 
-  if (session.perfil !== "ADMIN") {
+  if (session.perfil !== "ADMIN" && session.perfil !== "ANALISTA") {
     return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
   }
 
-  const rows = await db
-    .select({
-      id: usuarios.id,
-      nome: usuarios.nome,
-      email: usuarios.email,
-      perfil: usuarios.perfil,
-      ativo: usuarios.ativo,
-      createdAt: usuarios.createdAt,
-    })
-    .from(usuarios)
-    .where(eq(usuarios.ativo, true));
+  const { searchParams } = new URL(request.url);
+  const perfilParam = searchParams.get("perfil");
+
+  const allowedPerfis = ["ADMIN", "ANALISTA", "OPERADOR"] as const;
+  const perfilFilter =
+    perfilParam && allowedPerfis.includes(perfilParam as (typeof allowedPerfis)[number])
+      ? (perfilParam as (typeof allowedPerfis)[number])
+      : undefined;
+
+  const rows = perfilFilter
+    ? await db
+        .select({
+          id: usuarios.id,
+          nome: usuarios.nome,
+          email: usuarios.email,
+          perfil: usuarios.perfil,
+          ativo: usuarios.ativo,
+          createdAt: usuarios.createdAt,
+        })
+        .from(usuarios)
+        .where(and(eq(usuarios.ativo, true), eq(usuarios.perfil, perfilFilter)))
+    : await db
+        .select({
+          id: usuarios.id,
+          nome: usuarios.nome,
+          email: usuarios.email,
+          perfil: usuarios.perfil,
+          ativo: usuarios.ativo,
+          createdAt: usuarios.createdAt,
+        })
+        .from(usuarios)
+        .where(eq(usuarios.ativo, true));
 
   return NextResponse.json(rows);
 }

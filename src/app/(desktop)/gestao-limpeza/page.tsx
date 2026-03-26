@@ -63,7 +63,7 @@ export default function GestaoLimpezaPage() {
   }
 
   async function buscarUsuarios() {
-    const res = await fetch("/api/usuarios");
+    const res = await fetch("/api/usuarios?perfil=OPERADOR");
     if (!res.ok) return;
 
     const data = (await res.json()) as Usuario[];

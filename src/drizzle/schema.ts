@@ -8,7 +8,10 @@ import {
   decimal,
   jsonb,
   uuid,
+  check,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -53,6 +56,19 @@ export const prioridadeLimpezaEnum = pgEnum("prioridade_limpeza", [
 export const tipoOrigemLimpezaEnum = pgEnum("tipo_origem_limpeza", [
   "REQUISICAO_FORMAL",
   "LIMPEZA_DIRETA",
+]);
+
+export const tipoChecklistEnum = pgEnum("tipo_checklist", [
+  "RECEBIMENTO",
+  "EXPEDICAO",
+]);
+
+export const statusRevisaoChecklistEnum = pgEnum("status_revisao_checklist", [
+  "RASCUNHO",
+  "PENDENTE_APROVACAO",
+  "APROVADO",
+  "REJEITADO",
+  "ARQUIVADO",
 ]);
 
 // ─── Tabelas ──────────────────────────────────────────────────────────────────
@@ -161,6 +177,69 @@ export const checklistsExpedicao = pgTable("checklists_expedicao", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const checklistTemplates = pgTable("checklist_templates", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  nome: text("nome").notNull(),
+  descricao: text("descricao"),
+  tipoChecklist: tipoChecklistEnum("tipo_checklist").notNull(),
+  ativo: boolean("ativo").notNull().default(true),
+  criadoPorId: uuid("criado_por_id")
+    .notNull()
+    .references(() => usuarios.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const checklistTemplateRevisoes = pgTable(
+  "checklist_template_revisoes",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    templateId: uuid("template_id")
+      .notNull()
+      .references(() => checklistTemplates.id, { onDelete: "cascade" }),
+    versao: integer("versao").notNull(),
+    status: statusRevisaoChecklistEnum("status").notNull().default("RASCUNHO"),
+    definicao: jsonb("definicao").notNull(),
+    resumoMudancas: text("resumo_mudancas"),
+    criadoPorId: uuid("criado_por_id")
+      .notNull()
+      .references(() => usuarios.id),
+    aprovadoPorId: uuid("aprovado_por_id").references(() => usuarios.id),
+    aprovadoEm: timestamp("aprovado_em"),
+    rejeitadoEm: timestamp("rejeitado_em"),
+    motivoRejeicao: text("motivo_rejeicao"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    revisaoPorTemplateUnique: uniqueIndex(
+      "checklist_template_revisoes_template_versao_unique"
+    ).on(table.templateId, table.versao),
+    noAutoAprovacao: check(
+      "checklist_template_revisoes_no_auto_aprovacao",
+      sql`${table.aprovadoPorId} IS NULL OR ${table.aprovadoPorId} <> ${table.criadoPorId}`
+    ),
+  })
+);
+
+export const checklistTemplateEventos = pgTable("checklist_template_eventos", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  templateId: uuid("template_id")
+    .notNull()
+    .references(() => checklistTemplates.id, { onDelete: "cascade" }),
+  revisaoId: uuid("revisao_id").references(() => checklistTemplateRevisoes.id, {
+    onDelete: "cascade",
+  }),
+  acao: text("acao").notNull(),
+  usuarioId: uuid("usuario_id")
+    .notNull()
+    .references(() => usuarios.id),
+  usuarioNome: text("usuario_nome").notNull(),
+  usuarioEmail: text("usuario_email").notNull(),
+  detalhes: jsonb("detalhes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const requisicoesLimpeza = pgTable("requisicoes_limpeza", {
   id: uuid("id").defaultRandom().primaryKey(),
   contentorId: uuid("contentor_id")
@@ -226,6 +305,13 @@ export type Contentor = typeof contentores.$inferSelect;
 export type NovoContentor = typeof contentores.$inferInsert;
 export type ChecklistRecebimento = typeof checklistsRecebimento.$inferSelect;
 export type ChecklistExpedicao = typeof checklistsExpedicao.$inferSelect;
+export type ChecklistTemplate = typeof checklistTemplates.$inferSelect;
+export type NovoChecklistTemplate = typeof checklistTemplates.$inferInsert;
+export type ChecklistTemplateRevisao =
+  typeof checklistTemplateRevisoes.$inferSelect;
+export type NovaChecklistTemplateRevisao =
+  typeof checklistTemplateRevisoes.$inferInsert;
+export type ChecklistTemplateEvento = typeof checklistTemplateEventos.$inferSelect;
 export type RequisicaoLimpeza = typeof requisicoesLimpeza.$inferSelect;
 export type StatusHistoricoEntry = typeof statusHistorico.$inferSelect;
 export type Notificacao = typeof notificacoes.$inferSelect;
@@ -236,3 +322,6 @@ export type Perfil = (typeof perfilEnum.enumValues)[number];
 export type StatusLimpeza = (typeof statusLimpezaEnum.enumValues)[number];
 export type PrioridadeLimpeza =
   (typeof prioridadeLimpezaEnum.enumValues)[number];
+export type TipoChecklist = (typeof tipoChecklistEnum.enumValues)[number];
+export type StatusRevisaoChecklist =
+  (typeof statusRevisaoChecklistEnum.enumValues)[number];
