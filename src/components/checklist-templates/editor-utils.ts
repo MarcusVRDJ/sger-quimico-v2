@@ -1,6 +1,41 @@
 import type { ChecklistTemplateDefinition } from "@/lib/checklist-template-definition";
 import type { TipoChecklist } from "@/components/checklist-templates/types";
 
+function moveItem<T>(items: T[], fromIndex: number, toIndex: number): T[] {
+  if (
+    fromIndex === toIndex ||
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= items.length ||
+    toIndex >= items.length
+  ) {
+    return items;
+  }
+
+  const cloned = [...items];
+  const [moved] = cloned.splice(fromIndex, 1);
+  cloned.splice(toIndex, 0, moved);
+  return cloned;
+}
+
+function withSequentialOrder<T extends { order?: number }>(items: T[]): T[] {
+  return items.map((item, index) => ({
+    ...item,
+    order: index,
+  }));
+}
+
+function normalizeFieldKeyBase(label: string): string {
+  const normalized = label
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
+  return normalized || "campo";
+}
+
 export function defaultDefinition(tipo: TipoChecklist): ChecklistTemplateDefinition {
   if (tipo === "RECEBIMENTO") {
     return {
@@ -100,4 +135,149 @@ export function validateEditorDefinition(definicao: ChecklistTemplateDefinition)
   }
 
   return null;
+}
+
+export function reorderSectionsInDefinition(
+  definition: ChecklistTemplateDefinition,
+  fromIndex: number,
+  toIndex: number
+): ChecklistTemplateDefinition {
+  const moved = moveItem(definition.sections, fromIndex, toIndex);
+
+  if (moved === definition.sections) {
+    return definition;
+  }
+
+  return {
+    ...definition,
+    sections: withSequentialOrder(moved),
+  };
+}
+
+export function reorderFieldsInDefinitionSection(
+  definition: ChecklistTemplateDefinition,
+  sectionIndex: number,
+  fromIndex: number,
+  toIndex: number
+): ChecklistTemplateDefinition {
+  if (sectionIndex < 0 || sectionIndex >= definition.sections.length) {
+    return definition;
+  }
+
+  const section = definition.sections[sectionIndex];
+  const moved = moveItem(section.fields, fromIndex, toIndex);
+
+  if (moved === section.fields) {
+    return definition;
+  }
+
+  const nextSection = {
+    ...section,
+    fields: withSequentialOrder(moved),
+  };
+
+  return {
+    ...definition,
+    sections: definition.sections.map((item, index) =>
+      index === sectionIndex ? nextSection : item
+    ),
+  };
+}
+
+export function moveFieldAcrossSectionsInDefinition(
+  definition: ChecklistTemplateDefinition,
+  fromSectionIndex: number,
+  fromFieldIndex: number,
+  toSectionIndex: number,
+  toFieldIndex: number
+): ChecklistTemplateDefinition {
+  if (
+    fromSectionIndex < 0 ||
+    fromSectionIndex >= definition.sections.length ||
+    toSectionIndex < 0 ||
+    toSectionIndex >= definition.sections.length
+  ) {
+    return definition;
+  }
+
+  if (fromSectionIndex === toSectionIndex) {
+    return reorderFieldsInDefinitionSection(
+      definition,
+      fromSectionIndex,
+      fromFieldIndex,
+      toFieldIndex
+    );
+  }
+
+  const source = definition.sections[fromSectionIndex];
+  const target = definition.sections[toSectionIndex];
+
+  if (
+    fromFieldIndex < 0 ||
+    fromFieldIndex >= source.fields.length ||
+    source.fields.length <= 1
+  ) {
+    return definition;
+  }
+
+  const sourceFields = [...source.fields];
+  const [moved] = sourceFields.splice(fromFieldIndex, 1);
+
+  const targetFields = [...target.fields];
+  const safeToIndex = Math.max(0, Math.min(toFieldIndex, targetFields.length));
+  targetFields.splice(safeToIndex, 0, moved);
+
+  return {
+    ...definition,
+    sections: definition.sections.map((section, index) => {
+      if (index === fromSectionIndex) {
+        return {
+          ...section,
+          fields: withSequentialOrder(sourceFields),
+        };
+      }
+
+      if (index === toSectionIndex) {
+        return {
+          ...section,
+          fields: withSequentialOrder(targetFields),
+        };
+      }
+
+      return section;
+    }),
+  };
+}
+
+export function suggestUniqueFieldKey(
+  definition: ChecklistTemplateDefinition,
+  label: string,
+  current?: { sectionIndex: number; fieldIndex: number }
+): string {
+  const base = normalizeFieldKeyBase(label);
+
+  const usedKeys = new Set<string>();
+  definition.sections.forEach((section, sectionIndex) => {
+    section.fields.forEach((field, fieldIndex) => {
+      if (
+        current &&
+        current.sectionIndex === sectionIndex &&
+        current.fieldIndex === fieldIndex
+      ) {
+        return;
+      }
+      usedKeys.add(field.key);
+    });
+  });
+
+  if (!usedKeys.has(base)) {
+    return base;
+  }
+
+  let sequence = 2;
+  while (usedKeys.has(`${base}-${sequence}`)) {
+    sequence += 1;
+  }
+
+  return `${base}-${sequence}`;
 }

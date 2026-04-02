@@ -4,6 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import type { ChecklistTemplateDefinition } from "@/lib/checklist-template-definition";
 import {
   defaultDefinition,
+  moveFieldAcrossSectionsInDefinition,
+  reorderFieldsInDefinitionSection,
+  reorderSectionsInDefinition,
+  suggestUniqueFieldKey,
   validateEditorDefinition,
 } from "@/components/checklist-templates/editor-utils";
 import type {
@@ -207,6 +211,48 @@ export default function ChecklistTemplatesPage() {
     }));
   }
 
+  function reorderSections(fromIndex: number, toIndex: number) {
+    updateDefinition((prev) => reorderSectionsInDefinition(prev, fromIndex, toIndex));
+  }
+
+  function reorderFields(sectionIndex: number, fromIndex: number, toIndex: number) {
+    updateDefinition((prev) =>
+      reorderFieldsInDefinitionSection(prev, sectionIndex, fromIndex, toIndex)
+    );
+  }
+
+  function moveFieldAcrossSections(
+    fromSectionIndex: number,
+    fromFieldIndex: number,
+    toSectionIndex: number,
+    toFieldIndex: number
+  ) {
+    updateDefinition((prev) =>
+      moveFieldAcrossSectionsInDefinition(
+        prev,
+        fromSectionIndex,
+        fromFieldIndex,
+        toSectionIndex,
+        toFieldIndex
+      )
+    );
+  }
+
+  function updateFieldLabel(sectionIndex: number, fieldIndex: number, label: string) {
+    if (!editorDefinition) return;
+
+    const generatedKey = suggestUniqueFieldKey(editorDefinition, label, {
+      sectionIndex,
+      fieldIndex,
+    });
+
+    updateField(sectionIndex, fieldIndex, (prev) => ({
+      ...prev,
+      label,
+      key: generatedKey,
+    }));
+  }
+
   async function salvarNovaRevisao(submeterAposSalvar: boolean) {
     if (!templateSelecionado || !editorDefinition) {
       setErro("Selecione um template para editar.");
@@ -397,6 +443,10 @@ export default function ChecklistTemplatesPage() {
             onAddField={addField}
             onRemoveField={removeField}
             onUpdateField={updateField}
+            onUpdateFieldLabel={updateFieldLabel}
+            onReorderSections={reorderSections}
+            onReorderFields={reorderFields}
+            onMoveFieldAcrossSections={moveFieldAcrossSections}
             onSaveDraft={() => void salvarNovaRevisao(false)}
             onSaveAndSubmit={() => void salvarNovaRevisao(true)}
           />
