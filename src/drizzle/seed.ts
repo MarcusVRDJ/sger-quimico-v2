@@ -224,62 +224,104 @@ async function seed(): Promise<void> {
         {
           id: "inspecao-externa",
           title: "Inspeção Externa",
+          order: 0,
           fields: [
             {
               key: "avarias",
               label: "Há avarias físicas visíveis?",
               type: "boolean",
               required: true,
+              order: 0,
             },
             {
               key: "lacreRoto",
               label: "Lacre roto ou ausente?",
               type: "boolean",
               required: true,
+              order: 1,
             },
           ],
         },
         {
           id: "inspecao-interna",
           title: "Inspeção Interna",
+          order: 1,
           fields: [
             {
               key: "produtoAnterior",
               label: "Presença de produto anterior?",
               type: "boolean",
               required: true,
+              order: 0,
             },
             {
               key: "residuos",
               label: "Presença de resíduos?",
               type: "boolean",
               required: true,
+              order: 1,
             },
           ],
         },
         {
           id: "validade",
           title: "Validades",
+          order: 2,
           fields: [
             {
               key: "testesVencidos",
               label: "Testes técnicos vencidos?",
               type: "boolean",
               required: true,
+              order: 0,
             },
             {
               key: "dataValidade",
               label: "Data de validade do contentor",
               type: "date",
               required: false,
+              order: 1,
             },
             {
               key: "dataUltimaInspecao",
               label: "Data da última inspeção",
               type: "date",
               required: false,
+              order: 2,
             },
           ],
+        },
+      ],
+      statusRules: [
+        {
+          priority: 0,
+          conditions: [{ key: "avarias", operator: "true" }],
+          resultStatus: "REPROVADO_INTEGRIDADE",
+        },
+        {
+          priority: 1,
+          conditions: [{ key: "lacreRoto", operator: "true" }],
+          resultStatus: "REPROVADO_INTEGRIDADE",
+        },
+        {
+          priority: 2,
+          conditions: [{ key: "testesVencidos", operator: "true" }],
+          resultStatus: "REPROVADO_VENCIDO",
+        },
+        {
+          priority: 3,
+          conditions: [{ key: "produtoAnterior", operator: "true" }],
+          resultStatus: "APROVADO_SUJO",
+        },
+        {
+          priority: 4,
+          conditions: [{ key: "residuos", operator: "true" }],
+          resultStatus: "APROVADO_SUJO",
+        },
+        {
+          priority: 5,
+          conditions: [],
+          resultStatus: "APROVADO",
         },
       ],
     },
@@ -296,26 +338,70 @@ async function seed(): Promise<void> {
         {
           id: "inspecao",
           title: "Inspeção",
+          order: 0,
           fields: [
             {
               key: "tampaOk",
               label: "Tampa OK?",
               type: "boolean",
               required: true,
+              order: 0,
             },
             {
               key: "vedacaoOk",
               label: "Vedação OK?",
               type: "boolean",
               required: true,
+              order: 1,
             },
             {
               key: "lacresIntactos",
               label: "Lacres intactos?",
               type: "boolean",
               required: true,
+              order: 2,
+            },
+            {
+              key: "tipoDestino",
+              label: "Tipo de destino",
+              type: "text",
+              required: true,
+              order: 3,
             },
           ],
+        },
+      ],
+      statusRules: [
+        {
+          priority: 0,
+          conditions: [{ key: "tampaOk", operator: "false" }],
+          resultStatus: "RETIDO",
+        },
+        {
+          priority: 1,
+          conditions: [{ key: "vedacaoOk", operator: "false" }],
+          resultStatus: "RETIDO",
+        },
+        {
+          priority: 2,
+          conditions: [{ key: "lacresIntactos", operator: "false" }],
+          resultStatus: "RETIDO",
+        },
+        {
+          priority: 3,
+          conditions: [
+            {
+              key: "tipoDestino",
+              operator: "equals",
+              value: "MANUTENCAO_EXTERNA",
+            },
+          ],
+          resultStatus: "MANUTENCAO_EXTERNA",
+        },
+        {
+          priority: 4,
+          conditions: [],
+          resultStatus: "EM_CICLO",
         },
       ],
     },

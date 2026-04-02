@@ -4,14 +4,19 @@ import {
   checklistsRecebimento,
   contentores,
   statusHistorico,
+  type StatusContentor,
 } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth";
-import { calcularStatusRecebimento } from "@/lib/checklist-logic";
+import {
+  calcularStatusRecebimento,
+  evaluateStatusFromTemplate,
+} from "@/lib/checklist-logic";
 import {
   getActiveChecklistTemplate,
   templateHasRequiredFieldKeys,
 } from "@/lib/checklist-templates";
+import type { ChecklistTemplateDefinition } from "@/lib/checklist-template-definition";
 import { z } from "zod";
 
 const checklistSchema = z.object({
@@ -135,7 +140,37 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const respostas = { avarias, lacreRoto, testesVencidos, produtoAnterior, residuos };
-  const statusResultante = calcularStatusRecebimento(respostas);
+
+  // Avaliar status: usar regras do template se existem, senão fallback legado
+  let statusResultante: StatusContentor;
+  if (
+    activeTemplate.definicao.statusRules &&
+    activeTemplate.definicao.statusRules.length > 0
+  ) {
+    try {
+      statusResultante = evaluateStatusFromTemplate(
+        respostas,
+        activeTemplate.definicao as ChecklistTemplateDefinition
+      );
+    } catch (error) {
+      return NextResponse.json(
+        {
+          error: "Erro ao avaliar regras de status do template",
+          details: error instanceof Error ? error.message : "Erro desconhecido",
+        },
+        { status: 422 }
+      );
+    }
+  } else {
+    // Fallback legado: usar função hardcoded
+    statusResultante = calcularStatusRecebimento({
+      avarias,
+      lacreRoto,
+      testesVencidos,
+      produtoAnterior,
+      residuos,
+    });
+  }
 
   // Cria checklist (snapshot pattern)
   const [checklist] = await db

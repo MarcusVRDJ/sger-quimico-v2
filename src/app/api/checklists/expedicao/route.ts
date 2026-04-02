@@ -4,6 +4,7 @@ import {
   checklistsExpedicao,
   contentores,
   statusHistorico,
+  type StatusContentor,
 } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "@/lib/auth";
@@ -11,6 +12,8 @@ import {
   getActiveChecklistTemplate,
   templateHasRequiredFieldKeys,
 } from "@/lib/checklist-templates";
+import { evaluateStatusFromTemplate } from "@/lib/checklist-logic";
+import type { ChecklistTemplateDefinition } from "@/lib/checklist-template-definition";
 import { z } from "zod";
 
 const checklistSchema = z.object({
@@ -97,13 +100,43 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // Determina status resultante
-  const reprovado = !tampaOk || !vedacaoOk || !lacresIntactos;
-  const statusResultante = reprovado
-    ? "RETIDO"
-    : tipoDestino === "MANUTENCAO_EXTERNA"
-      ? "MANUTENCAO_EXTERNA"
-      : "EM_CICLO";
+  // Avaliação de status: usar regras do template se existem, senão fallback legado
+  const respostas = {
+    tampaOk,
+    vedacaoOk,
+    lacresIntactos,
+    tipoDestino,
+  };
+
+  let statusResultante: StatusContentor;
+  if (
+    activeTemplate.definicao.statusRules &&
+    activeTemplate.definicao.statusRules.length > 0
+  ) {
+    try {
+      statusResultante = evaluateStatusFromTemplate(
+        respostas,
+        activeTemplate.definicao as ChecklistTemplateDefinition
+      );
+    } catch (error) {
+      return NextResponse.json(
+        {
+          error: "Erro ao avaliar regras de status do template",
+          details:
+            error instanceof Error ? error.message : "Erro desconhecido",
+        },
+        { status: 422 }
+      );
+    }
+  } else {
+    // Fallback legado: lógica hardcoded
+    const reprovado = !tampaOk || !vedacaoOk || !lacresIntactos;
+    statusResultante = reprovado
+      ? "RETIDO"
+      : tipoDestino === "MANUTENCAO_EXTERNA"
+        ? "MANUTENCAO_EXTERNA"
+        : "EM_CICLO";
+  }
 
   // Cria checklist (snapshot pattern)
   const [checklist] = await db
