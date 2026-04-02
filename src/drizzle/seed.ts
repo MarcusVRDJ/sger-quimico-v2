@@ -51,6 +51,12 @@ async function seed(): Promise<void> {
     perfil: "ADMIN",
   });
 
+  await ensureUser({
+    nome: "Admin SGE 2",
+    email: "admin2@sge.com",
+    perfil: "ADMIN",
+  });
+
   const analista = await ensureUser({
     nome: "Ana Analista",
     email: "analista@sge.com",
