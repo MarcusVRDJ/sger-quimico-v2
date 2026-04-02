@@ -14,6 +14,11 @@ import type {
   TemplateSection,
   TipoChecklist,
 } from "@/components/checklist-templates/types";
+import { TemplateListSection } from "@/components/checklist-templates/TemplateListSection";
+import { RevisionListSection } from "@/components/checklist-templates/RevisionListSection";
+import { RevisionEditorSection } from "@/components/checklist-templates/RevisionEditorSection";
+import { PendingReviewsSection } from "@/components/checklist-templates/PendingReviewsSection";
+import { ChecklistPreviewPanel } from "@/components/checklist-templates/ChecklistPreviewPanel";
 
 export default function ChecklistTemplatesPage() {
   const [templates, setTemplates] = useState<TemplateRow[]>([]);
@@ -367,416 +372,58 @@ export default function ChecklistTemplatesPage() {
           </p>
         </section>
 
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-card rounded-lg border border-border overflow-hidden">
-            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-              <h3 className="font-semibold text-foreground">Templates</h3>
-              <span className="text-xs text-muted-foreground">{pendenciasTexto}</span>
-            </div>
-            {carregando ? (
-              <div className="p-4 text-sm text-muted-foreground">Carregando...</div>
-            ) : (
-              <div className="divide-y divide-border">
-                {templates.map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() => void carregarRevisoes(t)}
-                    className="w-full text-left px-4 py-3 hover:bg-muted/40"
-                  >
-                    <p className="text-sm font-medium text-foreground">
-                      {t.tipoChecklist === "RECEBIMENTO"
-                        ? "Recebimento"
-                        : "Expedição"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {t.tipoChecklist} • {new Date(t.updatedAt).toLocaleString("pt-BR")}
-                    </p>
-                  </button>
-                ))}
-                {templates.length === 0 && (
-                  <div className="p-4 text-sm text-muted-foreground">Nenhum template cadastrado.</div>
-                )}
-              </div>
-            )}
-          </div>
+        <section className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(420px,0.9fr)] gap-6 items-start">
+          <ChecklistPreviewPanel definition={editorDefinition} />
 
-          <div className="bg-card rounded-lg border border-border overflow-hidden">
-            <div className="px-4 py-3 border-b border-border">
-              <h3 className="font-semibold text-foreground">
-                {templateSelecionado
-                  ? `Revisões • ${
-                      templateSelecionado.tipoChecklist === "RECEBIMENTO"
-                        ? "Recebimento"
-                        : "Expedição"
-                    }`
-                  : "Revisões"}
-              </h3>
-            </div>
-            <div className="divide-y divide-border">
-              {revisoes.map((r) => (
-                <div key={r.id} className="px-4 py-3 space-y-2">
-                  <p className="text-sm font-medium text-foreground">
-                    v{r.versao} • {r.status}
-                  </p>
-                  {r.resumoMudancas && (
-                    <p className="text-xs text-muted-foreground">{r.resumoMudancas}</p>
-                  )}
-                  <div className="flex gap-2">
-                    {(r.status === "RASCUNHO" || r.status === "REJEITADO") && (
-                      <button
-                        onClick={() => void submeterRevisao(r.id)}
-                        className="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-md"
-                      >
-                        Submeter
-                      </button>
-                    )}
-                    {r.status === "PENDENTE_APROVACAO" && (
-                      <>
-                        <button
-                          onClick={() => void aprovar(r.id)}
-                          className="bg-green-600 text-white text-xs px-3 py-1.5 rounded-md"
-                        >
-                          Aprovar
-                        </button>
-                        <button
-                          onClick={() => void rejeitar(r.id)}
-                          className="bg-red-600 text-white text-xs px-3 py-1.5 rounded-md"
-                        >
-                          Rejeitar
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
-
-              {revisoes.length === 0 && (
-                <div className="p-4 text-sm text-muted-foreground">
-                  Selecione um template para visualizar as revisões.
-                </div>
-              )}
-            </div>
-          </div>
+          <RevisionEditorSection
+            templateSelecionado={templateSelecionado}
+            editorDefinition={editorDefinition}
+            editorSourceRevisionId={editorSourceRevisionId}
+            editorResumo={editorResumo}
+            revisoes={revisoes}
+            salvandoRevisao={salvandoRevisao}
+            onChangeRevisionSource={carregarRevisaoNoEditor}
+            onChangeResumo={setEditorResumo}
+            onChangeTitle={(value) => updateDefinition((prev) => ({ ...prev, title: value }))}
+            onChangeDescription={(value) =>
+              updateDefinition((prev) => ({
+                ...prev,
+                description: value || undefined,
+              }))
+            }
+            onAddSection={addSection}
+            onRemoveSection={removeSection}
+            onUpdateSection={updateSection}
+            onAddField={addField}
+            onRemoveField={removeField}
+            onUpdateField={updateField}
+            onSaveDraft={() => void salvarNovaRevisao(false)}
+            onSaveAndSubmit={() => void salvarNovaRevisao(true)}
+          />
         </section>
 
-        <section className="bg-card rounded-lg border border-border overflow-hidden">
-          <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-3">
-            <div>
-              <h3 className="font-semibold text-foreground">Editor de Revisão</h3>
-              <p className="text-xs text-muted-foreground">
-                Edite seções e campos e salve uma nova revisão sequencial.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => void salvarNovaRevisao(false)}
-                disabled={!templateSelecionado || !editorDefinition || salvandoRevisao}
-                className="bg-primary disabled:opacity-50 text-primary-foreground text-xs px-3 py-1.5 rounded-md"
-              >
-                Salvar Revisão
-              </button>
-              <button
-                onClick={() => void salvarNovaRevisao(true)}
-                disabled={!templateSelecionado || !editorDefinition || salvandoRevisao}
-                className="bg-blue-600 disabled:opacity-50 text-white text-xs px-3 py-1.5 rounded-md"
-              >
-                Salvar e Submeter
-              </button>
-            </div>
-          </div>
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          <TemplateListSection
+            carregando={carregando}
+            templates={templates}
+            pendenciasTexto={pendenciasTexto}
+            onSelectTemplate={(template) => void carregarRevisoes(template)}
+          />
 
-          {!templateSelecionado || !editorDefinition ? (
-            <div className="p-4 text-sm text-muted-foreground">
-              Selecione um template para começar a editar.
-            </div>
-          ) : (
-            <div className="p-4 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs text-muted-foreground mb-1">
-                    Revisão base
-                  </label>
-                  <select
-                    value={editorSourceRevisionId}
-                    onChange={(e) => carregarRevisaoNoEditor(e.target.value)}
-                    className="w-full border border-border bg-background rounded-md px-3 py-2 text-sm"
-                  >
-                    {revisoes.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        v{r.versao} • {r.status}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-muted-foreground mb-1">
-                    Resumo das mudanças
-                  </label>
-                  <input
-                    value={editorResumo}
-                    onChange={(e) => setEditorResumo(e.target.value)}
-                    placeholder="Ex: Ajuste de perguntas da inspeção"
-                    className="w-full border border-border bg-background rounded-md px-3 py-2 text-sm"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Título</label>
-                  <input
-                    value={editorDefinition.title}
-                    onChange={(e) =>
-                      updateDefinition((prev) => ({ ...prev, title: e.target.value }))
-                    }
-                    className="w-full border border-border bg-background rounded-md px-3 py-2 text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-muted-foreground mb-1">
-                    Descrição
-                  </label>
-                  <input
-                    value={editorDefinition.description ?? ""}
-                    onChange={(e) =>
-                      updateDefinition((prev) => ({
-                        ...prev,
-                        description: e.target.value || undefined,
-                      }))
-                    }
-                    className="w-full border border-border bg-background rounded-md px-3 py-2 text-sm"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {editorDefinition.sections.map((section, sectionIndex) => (
-                  <div key={section.id + sectionIndex} className="border border-border rounded-md p-3 space-y-3">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                      <input
-                        value={section.id}
-                        onChange={(e) =>
-                          updateSection(sectionIndex, (prev) => ({
-                            ...prev,
-                            id: e.target.value,
-                          }))
-                        }
-                        placeholder="ID da seção"
-                        className="border border-border bg-background rounded-md px-3 py-2 text-sm"
-                      />
-                      <input
-                        value={section.title}
-                        onChange={(e) =>
-                          updateSection(sectionIndex, (prev) => ({
-                            ...prev,
-                            title: e.target.value,
-                          }))
-                        }
-                        placeholder="Título da seção"
-                        className="border border-border bg-background rounded-md px-3 py-2 text-sm"
-                      />
-                      <button
-                        onClick={() => removeSection(sectionIndex)}
-                        className="border border-red-300 text-red-600 text-xs rounded-md px-3 py-2"
-                      >
-                        Remover Seção
-                      </button>
-                    </div>
-
-                    <input
-                      value={section.description ?? ""}
-                      onChange={(e) =>
-                        updateSection(sectionIndex, (prev) => ({
-                          ...prev,
-                          description: e.target.value || undefined,
-                        }))
-                      }
-                      placeholder="Descrição da seção (opcional)"
-                      className="w-full border border-border bg-background rounded-md px-3 py-2 text-sm"
-                    />
-
-                    <div className="space-y-2">
-                      {section.fields.map((field, fieldIndex) => (
-                        <div key={field.key + fieldIndex} className="border border-border rounded-md p-2 space-y-2">
-                          <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
-                            <input
-                              value={field.key}
-                              onChange={(e) =>
-                                updateField(sectionIndex, fieldIndex, (prev) => ({
-                                  ...prev,
-                                  key: e.target.value,
-                                }))
-                              }
-                              placeholder="Chave"
-                              className="border border-border bg-background rounded-md px-2 py-1.5 text-xs"
-                            />
-                            <input
-                              value={field.label}
-                              onChange={(e) =>
-                                updateField(sectionIndex, fieldIndex, (prev) => ({
-                                  ...prev,
-                                  label: e.target.value,
-                                }))
-                              }
-                              placeholder="Rótulo"
-                              className="border border-border bg-background rounded-md px-2 py-1.5 text-xs"
-                            />
-                            <select
-                              value={field.type}
-                              onChange={(e) =>
-                                updateField(sectionIndex, fieldIndex, (prev) => ({
-                                  ...prev,
-                                  type: e.target.value as TemplateField["type"],
-                                  options:
-                                    e.target.value === "select"
-                                      ? prev.options ?? [{ value: "OPCAO", label: "Opção" }]
-                                      : undefined,
-                                }))
-                              }
-                              className="border border-border bg-background rounded-md px-2 py-1.5 text-xs"
-                            >
-                              <option value="boolean">boolean</option>
-                              <option value="text">text</option>
-                              <option value="number">number</option>
-                              <option value="select">select</option>
-                              <option value="date">date</option>
-                            </select>
-                            <label className="flex items-center gap-2 text-xs text-foreground border border-border rounded-md px-2 py-1.5">
-                              <input
-                                type="checkbox"
-                                checked={field.required}
-                                onChange={(e) =>
-                                  updateField(sectionIndex, fieldIndex, (prev) => ({
-                                    ...prev,
-                                    required: e.target.checked,
-                                  }))
-                                }
-                              />
-                              Obrigatório
-                            </label>
-                            <button
-                              onClick={() => removeField(sectionIndex, fieldIndex)}
-                              className="border border-red-300 text-red-600 text-xs rounded-md px-2 py-1.5"
-                            >
-                              Remover
-                            </button>
-                          </div>
-
-                          {field.type === "select" && (
-                            <div className="space-y-1">
-                              {(field.options ?? []).map((option, optionIndex) => (
-                                <div key={`${option.value}-${optionIndex}`} className="grid grid-cols-2 gap-2">
-                                  <input
-                                    value={option.value}
-                                    onChange={(e) =>
-                                      updateField(sectionIndex, fieldIndex, (prev) => ({
-                                        ...prev,
-                                        options: (prev.options ?? []).map((opt, idx) =>
-                                          idx === optionIndex
-                                            ? { ...opt, value: e.target.value }
-                                            : opt
-                                        ),
-                                      }))
-                                    }
-                                    placeholder="valor"
-                                    className="border border-border bg-background rounded-md px-2 py-1.5 text-xs"
-                                  />
-                                  <input
-                                    value={option.label}
-                                    onChange={(e) =>
-                                      updateField(sectionIndex, fieldIndex, (prev) => ({
-                                        ...prev,
-                                        options: (prev.options ?? []).map((opt, idx) =>
-                                          idx === optionIndex
-                                            ? { ...opt, label: e.target.value }
-                                            : opt
-                                        ),
-                                      }))
-                                    }
-                                    placeholder="label"
-                                    className="border border-border bg-background rounded-md px-2 py-1.5 text-xs"
-                                  />
-                                </div>
-                              ))}
-                              <button
-                                onClick={() =>
-                                  updateField(sectionIndex, fieldIndex, (prev) => ({
-                                    ...prev,
-                                    options: [
-                                      ...(prev.options ?? []),
-                                      { value: `OPCAO_${Date.now()}`, label: "Nova Opção" },
-                                    ],
-                                  }))
-                                }
-                                className="text-xs text-blue-700"
-                              >
-                                + Adicionar opção
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-
-                    <button
-                      onClick={() => addField(sectionIndex)}
-                      className="text-xs text-blue-700"
-                    >
-                      + Adicionar campo
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={addSection}
-                className="text-xs text-blue-700"
-              >
-                + Adicionar seção
-              </button>
-            </div>
-          )}
+          <RevisionListSection
+            templateSelecionado={templateSelecionado}
+            revisoes={revisoes}
+            onSubmitRevision={(revisaoId) => void submeterRevisao(revisaoId)}
+            onApproveRevision={(revisaoId) => void aprovar(revisaoId)}
+            onRejectRevision={(revisaoId) => void rejeitar(revisaoId)}
+          />
         </section>
 
-        <section className="bg-card rounded-lg border border-border overflow-hidden">
-          <div className="px-4 py-3 border-b border-border">
-            <h3 className="font-semibold text-foreground">Pendências de Aprovação</h3>
-          </div>
-          <div className="divide-y divide-border">
-            {pendentes.map((p) => (
-              <div key={p.id} className="px-4 py-3 flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-foreground">
-                    {p.tipoChecklist === "RECEBIMENTO" ? "Recebimento" : "Expedição"} • v{p.versao}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Criada em {new Date(p.createdAt).toLocaleString("pt-BR")}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => void aprovar(p.id)}
-                    className="bg-green-600 text-white text-xs px-3 py-1.5 rounded-md"
-                  >
-                    Aprovar
-                  </button>
-                  <button
-                    onClick={() => void rejeitar(p.id)}
-                    className="bg-red-600 text-white text-xs px-3 py-1.5 rounded-md"
-                  >
-                    Rejeitar
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            {pendentes.length === 0 && (
-              <div className="p-4 text-sm text-muted-foreground">
-                Nenhuma revisão pendente no momento.
-              </div>
-            )}
-          </div>
-        </section>
+        <PendingReviewsSection
+          pendentes={pendentes}
+          onApprove={(revisaoId) => void aprovar(revisaoId)}
+          onReject={(revisaoId) => void rejeitar(revisaoId)}
+        />
       </main>
     </div>
   );
